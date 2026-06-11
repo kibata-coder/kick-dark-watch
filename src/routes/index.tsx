@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Play, RefreshCw, Radio, Trophy, AlertCircle } from "lucide-react";
+import { countryFlagUrl } from "@/lib/country-flags";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -153,12 +154,27 @@ function StatusBadge({ status }: { status?: string }) {
 }
 
 function TeamRow({ name, logo, score }: { name?: string; logo?: string; score?: number | string }) {
+  const src = logo && logo.trim() ? logo : countryFlagUrl(name);
   return (
     <div className="flex items-center justify-between gap-3">
       <div className="flex min-w-0 items-center gap-3">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted ring-1 ring-border">
-          {logo ? (
-            <img src={logo} alt="" className="h-full w-full object-cover" loading="lazy" />
+          {src ? (
+            <img
+              src={src}
+              alt={name ? `${name} flag` : ""}
+              className="h-full w-full object-cover"
+              loading="lazy"
+              onError={(e) => {
+                const fallback = countryFlagUrl(name);
+                const img = e.currentTarget;
+                if (fallback && img.src !== fallback) {
+                  img.src = fallback;
+                } else {
+                  img.style.display = "none";
+                }
+              }}
+            />
           ) : (
             <Trophy className="h-4 w-4 text-muted-foreground" />
           )}
