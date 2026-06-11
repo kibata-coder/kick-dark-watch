@@ -2,16 +2,17 @@ import { createServerFn } from "@tanstack/react-start";
 import { callSportsrc } from "./sportsrc.server";
 
 export const getMatches = createServerFn({ method: "GET" })
-  .inputValidator((data: { date: string; status?: string }) => data)
+  .inputValidator((data: { category?: string }) => data ?? {})
   .handler(async ({ data }) => {
-    const status = data.status || "inprogress";
-    return callSportsrc(
-      `type=matches&sport=football&status=${encodeURIComponent(status)}&date=${encodeURIComponent(data.date)}`,
-    );
+    const category = data?.category || "football";
+    return callSportsrc(`data=matches&category=${encodeURIComponent(category)}`);
   });
 
 export const getMatchDetail = createServerFn({ method: "GET" })
-  .inputValidator((data: { id: string }) => data)
+  .inputValidator((data: { id: string; category?: string }) => data)
   .handler(async ({ data }) => {
-    return callSportsrc(`type=detail&id=${encodeURIComponent(data.id)}`);
+    const category = data.category || "football";
+    return callSportsrc(
+      `data=detail&category=${encodeURIComponent(category)}&id=${encodeURIComponent(data.id)}`,
+    );
   });
