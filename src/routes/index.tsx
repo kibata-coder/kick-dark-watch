@@ -107,10 +107,17 @@ function StatusBadge({ status }: { status?: string }) {
   const v = statusVariant(status);
   if (v === "live") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-[oklch(var(--live)/0.15)] px-2.5 py-0.5 text-xs font-semibold text-[oklch(var(--live))] ring-1 ring-inset ring-[oklch(var(--live)/0.4)]">
+      <span
+        className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset"
+        style={{
+          backgroundColor: "oklch(0.7 0.22 25 / 0.15)",
+          color: "oklch(0.78 0.22 25)",
+          boxShadow: "inset 0 0 0 1px oklch(0.7 0.22 25 / 0.4)",
+        }}
+      >
         <span className="relative flex h-2 w-2">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[oklch(var(--live))] opacity-75" />
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-[oklch(var(--live))]" />
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" style={{ backgroundColor: "oklch(0.7 0.22 25)" }} />
+          <span className="relative inline-flex h-2 w-2 rounded-full" style={{ backgroundColor: "oklch(0.7 0.22 25)" }} />
         </span>
         LIVE
       </span>
@@ -274,8 +281,8 @@ function Index() {
           <div className="flex items-center gap-3">
             <div className="hidden items-center gap-2 rounded-full border border-border/60 bg-card/60 px-3 py-1.5 text-xs sm:flex">
               <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[oklch(var(--live))] opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-[oklch(var(--live))]" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" style={{ backgroundColor: "oklch(0.7 0.22 25)" }} />
+                <span className="relative inline-flex h-2 w-2 rounded-full" style={{ backgroundColor: "oklch(0.7 0.22 25)" }} />
               </span>
               <span className="font-medium">{liveCount} live now</span>
             </div>
