@@ -12,4 +12,6 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Force enable Nitro so it builds the server-side code for Cloudflare Pages
+  nitro: true,
 });
