@@ -264,7 +264,7 @@ function Index() {
       {/* Ambient gradient backdrop */}
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute -top-40 left-1/2 h-[500px] w-[900px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
-        <div className="absolute bottom-0 right-0 h-[400px] w-[400px] rounded-full bg-[oklch(var(--live)/0.08)] blur-3xl" />
+        <div className="absolute bottom-0 right-0 h-[400px] w-[400px] rounded-full blur-3xl" style={{ backgroundColor: "oklch(0.7 0.22 25 / 0.08)" }} />
       </div>
 
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/70 backdrop-blur-xl">
