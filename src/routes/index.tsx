@@ -23,52 +23,70 @@ export const Route = createFileRoute("/")({
 
 type Match = {
   id: string | number;
+  title?: string;
   home?: { name?: string; logo?: string; score?: number | string };
   away?: { name?: string; logo?: string; score?: number | string };
   league?: { name?: string; logo?: string } | string;
   status?: string;
   time?: string;
-  date?: string;
+  date?: number | string;
+  poster?: string;
   [k: string]: unknown;
 };
 
-function todayISO() {
-  const d = new Date();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${d.getFullYear()}-${m}-${day}`;
+function splitTitle(title?: string): { home?: string; away?: string } {
+  if (!title) return {};
+  const m = title.match(/^(.+?)\s+vs\.?\s+(.+)$/i);
+  if (m) return { home: m[1].trim(), away: m[2].trim() };
+  return { home: title };
+}
+
+function deriveStatus(dateMs?: number): string {
+  if (!dateMs) return "upcoming";
+  const now = Date.now();
+  const diff = now - dateMs;
+  if (diff >= 0 && diff < 2.5 * 60 * 60 * 1000) return "inprogress";
+  if (diff >= 2.5 * 60 * 60 * 1000) return "finished";
+  return "upcoming";
+}
+
+function formatKickoff(dateMs?: number): string | undefined {
+  if (!dateMs) return undefined;
+  try {
+    return new Date(dateMs).toLocaleString(undefined, {
+      weekday: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return undefined;
+  }
 }
 
 function normalizeMatches(raw: any): Match[] {
-  // SportSRC v2 returns { data: [{ league, matches: [...] }] }
-  const groups = Array.isArray(raw?.data) ? raw.data : Array.isArray(raw) ? raw : [];
-  const flat: Match[] = [];
-  for (const group of groups as any[]) {
-    const leagueName =
-      typeof group?.league === "string" ? group.league : group?.league?.name;
-    const leagueLogo = group?.league?.logo;
-    const matches: any[] = group?.matches ?? [group];
-    for (const m of matches) {
-      flat.push({
-        id: m.id ?? m.match_id,
-        home: {
-          name: m.teams?.home?.name ?? m.home?.name ?? "Home",
-          logo: m.teams?.home?.badge ?? m.home?.logo,
-          score: m.score?.current?.home ?? m.home?.score,
-        },
-        away: {
-          name: m.teams?.away?.name ?? m.away?.name ?? "Away",
-          logo: m.teams?.away?.badge ?? m.away?.logo,
-          score: m.score?.current?.away ?? m.away?.score,
-        },
-        league: { name: leagueName, logo: leagueLogo },
-        status: m.status,
-        time: m.status_detail,
-        date: m.timestamp,
-      });
-    }
-  }
-  return flat;
+  // SportSRC free V1 returns { success: true, data: [match, match, ...] }
+  const items: any[] = Array.isArray(raw?.data) ? raw.data : Array.isArray(raw) ? raw : [];
+  return items.map((m) => {
+    const t = splitTitle(m.title);
+    const dateMs = typeof m.date === "number" ? m.date : undefined;
+    return {
+      id: m.id,
+      title: m.title,
+      home: {
+        name: m.teams?.home?.name || t.home || "Home",
+        logo: m.teams?.home?.badge,
+      },
+      away: {
+        name: m.teams?.away?.name || t.away || "Away",
+        logo: m.teams?.away?.badge,
+      },
+      league: m.category ? { name: String(m.category) } : undefined,
+      status: deriveStatus(dateMs),
+      time: formatKickoff(dateMs),
+      date: dateMs,
+      poster: m.poster,
+    };
+  });
 }
 
 function extractStreamUrl(raw: any): string | null {
@@ -216,7 +234,6 @@ function Index() {
   const [streamLoading, setStreamLoading] = useState(false);
   const [streamError, setStreamError] = useState<string | null>(null);
 
-  const date = useMemo(() => todayISO(), []);
   const fetchMatches = useServerFn(getMatches);
   const fetchDetail = useServerFn(getMatchDetail);
 
@@ -224,7 +241,7 @@ function Index() {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchMatches({ data: { date } });
+      const data = await fetchMatches({ data: { category: "football" } });
       setMatches(normalizeMatches(data));
     } catch (e: any) {
       setError(e?.message || "Could not load matches");
