@@ -12,9 +12,9 @@ import { Play, RefreshCw, Radio, Trophy, AlertCircle } from "lucide-react";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "PitchLive — Live Football Streams & Scores" },
+      { title: "SOUDsports — Live Football Streams & Scores" },
       { name: "description", content: "Watch live football matches and follow scores in real time on a sleek dark dashboard." },
-      { property: "og:title", content: "PitchLive — Live Football Streams & Scores" },
+      { property: "og:title", content: "SOUDsports — Live Football Streams & Scores" },
       { property: "og:description", content: "Watch live football matches and follow scores in real time on a sleek dark dashboard." },
     ],
   }),
@@ -280,7 +280,7 @@ function Index() {
               <Radio className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-lg font-bold leading-none tracking-tight">PitchLive</h1>
+              <h1 className="text-lg font-bold leading-none tracking-tight">SOUDsports</h1>
               <p className="text-xs text-muted-foreground">Live football streams & scores</p>
             </div>
           </div>
