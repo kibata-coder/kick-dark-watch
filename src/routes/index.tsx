@@ -1,14 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { getMatches, getMatchDetail } from "@/lib/sportsrc.functions";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Play, RefreshCw, Radio, Trophy, AlertCircle } from "lucide-react";
-
-const API_KEY = import.meta.env.VITE_SPORTSRC_API_KEY || "";
-const API_BASE = "https://api.sportsrc.org/v2/";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -38,12 +37,6 @@ function todayISO() {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${d.getFullYear()}-${m}-${day}`;
-}
-
-async function apiFetch<T>(url: string): Promise<T> {
-  const res = await fetch(url, { headers: { "X-API-KEY": API_KEY } });
-  if (!res.ok) throw new Error(`Request failed (${res.status})`);
-  return res.json() as Promise<T>;
 }
 
 function normalizeMatches(raw: any): Match[] {
@@ -211,13 +204,14 @@ function Index() {
   const [streamError, setStreamError] = useState<string | null>(null);
 
   const date = useMemo(() => todayISO(), []);
+  const fetchMatches = useServerFn(getMatches);
+  const fetchDetail = useServerFn(getMatchDetail);
 
   const load = async () => {
     setLoading(true);
     setError(null);
     try {
-      const url = `${API_BASE}?type=matches&sport=football&status=inprogress&date=${date}`;
-      const data = await apiFetch<any>(url);
+      const data = await fetchMatches({ data: { date } });
       setMatches(normalizeMatches(data));
     } catch (e: any) {
       setError(e?.message || "Could not load matches");
@@ -239,7 +233,7 @@ function Index() {
     setStreamError(null);
     setStreamLoading(true);
     try {
-      const data = await apiFetch<any>(`${API_BASE}?type=detail&id=${encodeURIComponent(String(m.id))}`);
+      const data = await fetchDetail({ data: { id: String(m.id) } });
       const url = extractStreamUrl(data);
       if (!url) throw new Error("No stream available for this match");
       setStreamUrl(url);
