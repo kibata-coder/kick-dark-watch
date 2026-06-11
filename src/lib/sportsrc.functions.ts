@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 
 const API_BASE = "https://api.sportsrc.org/v2/";
 
-async function callSportsrc(qs: string): Promise<unknown> {
+async function callSportsrc(qs: string): Promise<any> {
   const apiKey = process.env.SPORTSRC_API_KEY;
   if (!apiKey) throw new Error("SPORTSRC_API_KEY is not configured");
   const res = await fetch(`${API_BASE}?${qs}`, {
