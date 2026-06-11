@@ -36,7 +36,7 @@ const NAME_TO_ISO: Record<string, string> = {
   "papua new guinea": "pg", paraguay: "py", peru: "pe", philippines: "ph",
   poland: "pl", portugal: "pt", qatar: "qa", romania: "ro", russia: "ru",
   rwanda: "rw", "saudi arabia": "sa", scotland: "gb-sct", senegal: "sn",
-  serbia: "rs", sierra leone: "sl", "sierra leone": "sl", singapore: "sg",
+  serbia: "rs", "sierra leone": "sl", singapore: "sg",
   slovakia: "sk", slovenia: "si", "south africa": "za", "south sudan": "ss",
   spain: "es", "sri lanka": "lk", sudan: "sd", suriname: "sr", sweden: "se",
   switzerland: "ch", syria: "sy", taiwan: "tw", "chinese taipei": "tw",
