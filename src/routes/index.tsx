@@ -40,32 +40,45 @@ function todayISO() {
 }
 
 function normalizeMatches(raw: any): Match[] {
-  const list = Array.isArray(raw) ? raw : raw?.matches ?? raw?.data ?? raw?.results ?? [];
-  return (list as any[]).map((m, i) => ({
-    id: m.id ?? m.match_id ?? m.matchId ?? i,
-    home: {
-      name: m.home?.name ?? m.home_name ?? m.homeTeam ?? m.team1 ?? "Home",
-      logo: m.home?.logo ?? m.home_logo ?? m.homeLogo,
-      score: m.home?.score ?? m.home_score ?? m.homeScore,
-    },
-    away: {
-      name: m.away?.name ?? m.away_name ?? m.awayTeam ?? m.team2 ?? "Away",
-      logo: m.away?.logo ?? m.away_logo ?? m.awayLogo,
-      score: m.away?.score ?? m.away_score ?? m.awayScore,
-    },
-    league:
-      typeof m.league === "string"
-        ? m.league
-        : { name: m.league?.name ?? m.league_name ?? m.tournament, logo: m.league?.logo },
-    status: m.status ?? m.match_status ?? "inprogress",
-    time: m.time ?? m.minute ?? m.elapsed,
-    date: m.date ?? m.start_time,
-    ...m,
-  }));
+  // SportSRC v2 returns { data: [{ league, matches: [...] }] }
+  const groups = Array.isArray(raw?.data) ? raw.data : Array.isArray(raw) ? raw : [];
+  const flat: Match[] = [];
+  for (const group of groups as any[]) {
+    const leagueName =
+      typeof group?.league === "string" ? group.league : group?.league?.name;
+    const leagueLogo = group?.league?.logo;
+    const matches: any[] = group?.matches ?? [group];
+    for (const m of matches) {
+      flat.push({
+        id: m.id ?? m.match_id,
+        home: {
+          name: m.teams?.home?.name ?? m.home?.name ?? "Home",
+          logo: m.teams?.home?.badge ?? m.home?.logo,
+          score: m.score?.current?.home ?? m.home?.score,
+        },
+        away: {
+          name: m.teams?.away?.name ?? m.away?.name ?? "Away",
+          logo: m.teams?.away?.badge ?? m.away?.logo,
+          score: m.score?.current?.away ?? m.away?.score,
+        },
+        league: { name: leagueName, logo: leagueLogo },
+        status: m.status,
+        time: m.status_detail,
+        date: m.timestamp,
+      });
+    }
+  }
+  return flat;
 }
 
 function extractStreamUrl(raw: any): string | null {
   if (!raw) return null;
+  const sources = raw?.data?.sources ?? raw?.sources;
+  if (Array.isArray(sources) && sources.length) {
+    const s = sources[0];
+    if (typeof s?.embedUrl === "string") return s.embedUrl;
+    if (typeof s?.url === "string") return s.url;
+  }
   const candidates = [
     raw.stream_url,
     raw.streamUrl,
