@@ -7,8 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Skeleton } from "@/components/ui/skeleton";
 import { Play, RefreshCw, Radio, Trophy, AlertCircle } from "lucide-react";
 
-// Replace YOUR_LICENSE_KEY with your SportSRC API key for testing.
-const API_KEY = "YOUR_LICENSE_KEY";
+const API_KEY = import.meta.env.VITE_SPORTSRC_API_KEY || "";
 const API_BASE = "https://api.sportsrc.org/v2/";
 
 export const Route = createFileRoute("/")({
