@@ -1,29 +1,370 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Play, RefreshCw, Radio, Trophy, AlertCircle } from "lucide-react";
+
+// Replace YOUR_LICENSE_KEY with your SportSRC API key for testing.
+const API_KEY = "YOUR_LICENSE_KEY";
+const API_BASE = "https://api.sportsrc.org/v2/";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Your App" },
-      { name: "description", content: "Replace this with a one-sentence description of your app." },
-      { property: "og:title", content: "Your App" },
-      { property: "og:description", content: "Replace this with a one-sentence description of your app." },
+      { title: "PitchLive — Live Football Streams & Scores" },
+      { name: "description", content: "Watch live football matches and follow scores in real time on a sleek dark dashboard." },
+      { property: "og:title", content: "PitchLive — Live Football Streams & Scores" },
+      { property: "og:description", content: "Watch live football matches and follow scores in real time on a sleek dark dashboard." },
     ],
   }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+type Match = {
+  id: string | number;
+  home?: { name?: string; logo?: string; score?: number | string };
+  away?: { name?: string; logo?: string; score?: number | string };
+  league?: { name?: string; logo?: string } | string;
+  status?: string;
+  time?: string;
+  date?: string;
+  [k: string]: unknown;
+};
+
+function todayISO() {
+  const d = new Date();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+async function apiFetch<T>(url: string): Promise<T> {
+  const res = await fetch(url, { headers: { "X-API-KEY": API_KEY } });
+  if (!res.ok) throw new Error(`Request failed (${res.status})`);
+  return res.json() as Promise<T>;
+}
+
+function normalizeMatches(raw: any): Match[] {
+  const list = Array.isArray(raw) ? raw : raw?.matches ?? raw?.data ?? raw?.results ?? [];
+  return (list as any[]).map((m, i) => ({
+    id: m.id ?? m.match_id ?? m.matchId ?? i,
+    home: {
+      name: m.home?.name ?? m.home_name ?? m.homeTeam ?? m.team1 ?? "Home",
+      logo: m.home?.logo ?? m.home_logo ?? m.homeLogo,
+      score: m.home?.score ?? m.home_score ?? m.homeScore,
+    },
+    away: {
+      name: m.away?.name ?? m.away_name ?? m.awayTeam ?? m.team2 ?? "Away",
+      logo: m.away?.logo ?? m.away_logo ?? m.awayLogo,
+      score: m.away?.score ?? m.away_score ?? m.awayScore,
+    },
+    league:
+      typeof m.league === "string"
+        ? m.league
+        : { name: m.league?.name ?? m.league_name ?? m.tournament, logo: m.league?.logo },
+    status: m.status ?? m.match_status ?? "inprogress",
+    time: m.time ?? m.minute ?? m.elapsed,
+    date: m.date ?? m.start_time,
+    ...m,
+  }));
+}
+
+function extractStreamUrl(raw: any): string | null {
+  if (!raw) return null;
+  const candidates = [
+    raw.stream_url,
+    raw.streamUrl,
+    raw.url,
+    raw.embed,
+    raw.iframe,
+    raw.data?.stream_url,
+    raw.data?.url,
+    raw.detail?.stream_url,
+  ];
+  for (const c of candidates) if (typeof c === "string" && c.trim()) return c;
+  if (Array.isArray(raw.streams) && raw.streams.length) {
+    const s = raw.streams[0];
+    return s?.url ?? s?.stream_url ?? null;
+  }
+  if (Array.isArray(raw.data?.streams) && raw.data.streams.length) {
+    const s = raw.data.streams[0];
+    return s?.url ?? s?.stream_url ?? null;
+  }
+  return null;
+}
+
+function statusVariant(status?: string): "live" | "upcoming" | "finished" {
+  const s = (status || "").toLowerCase();
+  if (s.includes("progress") || s.includes("live") || s.includes("ht") || s.includes("1h") || s.includes("2h")) return "live";
+  if (s.includes("finish") || s.includes("ft") || s.includes("ended")) return "finished";
+  return "upcoming";
+}
+
+function StatusBadge({ status }: { status?: string }) {
+  const v = statusVariant(status);
+  if (v === "live") {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-[oklch(var(--live)/0.15)] px-2.5 py-0.5 text-xs font-semibold text-[oklch(var(--live))] ring-1 ring-inset ring-[oklch(var(--live)/0.4)]">
+        <span className="relative flex h-2 w-2">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[oklch(var(--live))] opacity-75" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-[oklch(var(--live))]" />
+        </span>
+        LIVE
+      </span>
+    );
+  }
+  if (v === "finished") {
+    return <Badge variant="secondary" className="rounded-full">Finished</Badge>;
+  }
+  return <Badge variant="outline" className="rounded-full">Upcoming</Badge>;
+}
+
+function TeamRow({ name, logo, score }: { name?: string; logo?: string; score?: number | string }) {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted ring-1 ring-border">
+          {logo ? (
+            <img src={logo} alt="" className="h-full w-full object-cover" loading="lazy" />
+          ) : (
+            <Trophy className="h-4 w-4 text-muted-foreground" />
+          )}
+        </div>
+        <span className="truncate text-sm font-medium text-foreground">{name}</span>
+      </div>
+      {score !== undefined && score !== null && score !== "" && (
+        <span className="font-mono text-lg font-bold tabular-nums text-foreground">{score}</span>
+      )}
+    </div>
+  );
+}
+
+function MatchCard({ match, onWatch }: { match: Match; onWatch: (m: Match) => void }) {
+  const league = typeof match.league === "string" ? match.league : match.league?.name;
+  return (
+    <Card className="group flex flex-col overflow-hidden border-border/60 bg-card/80 backdrop-blur transition-all hover:border-primary/40 hover:shadow-[0_0_0_1px_oklch(var(--primary)/0.3),0_20px_40px_-20px_oklch(var(--primary)/0.4)]">
+      <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-3">
+        <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+          <Trophy className="h-3.5 w-3.5 shrink-0" />
+          <span className="truncate">{league || "Football"}</span>
+        </div>
+        <StatusBadge status={match.status} />
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <TeamRow name={match.home?.name} logo={match.home?.logo} score={match.home?.score} />
+        <TeamRow name={match.away?.name} logo={match.away?.logo} score={match.away?.score} />
+        {match.time && (
+          <div className="text-xs text-muted-foreground">{String(match.time)}{typeof match.time === "number" ? "'" : ""}</div>
+        )}
+      </CardContent>
+      <CardFooter className="mt-auto pt-3">
+        <Button onClick={() => onWatch(match)} className="w-full font-semibold" size="sm">
+          <Play className="mr-1.5 h-4 w-4 fill-current" />
+          Watch Stream
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+function MatchCardSkeleton() {
+  return (
+    <Card className="border-border/60 bg-card/80">
+      <CardHeader className="flex flex-row items-center justify-between pb-3">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-5 w-14 rounded-full" />
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {[0, 1].map((i) => (
+          <div key={i} className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-9 w-9 rounded-full" />
+              <Skeleton className="h-4 w-28" />
+            </div>
+            <Skeleton className="h-5 w-5" />
+          </div>
+        ))}
+      </CardContent>
+      <CardFooter className="pt-3">
+        <Skeleton className="h-9 w-full" />
+      </CardFooter>
+    </Card>
+  );
+}
+
+function Index() {
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Match | null>(null);
+  const [streamUrl, setStreamUrl] = useState<string | null>(null);
+  const [streamLoading, setStreamLoading] = useState(false);
+  const [streamError, setStreamError] = useState<string | null>(null);
+
+  const date = useMemo(() => todayISO(), []);
+
+  const load = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const url = `${API_BASE}?type=matches&sport=football&status=inprogress&date=${date}`;
+      const data = await apiFetch<any>(url);
+      setMatches(normalizeMatches(data));
+    } catch (e: any) {
+      setError(e?.message || "Could not load matches");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+    const id = setInterval(load, 60_000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleWatch = async (m: Match) => {
+    setSelected(m);
+    setStreamUrl(null);
+    setStreamError(null);
+    setStreamLoading(true);
+    try {
+      const data = await apiFetch<any>(`${API_BASE}?type=detail&id=${encodeURIComponent(String(m.id))}`);
+      const url = extractStreamUrl(data);
+      if (!url) throw new Error("No stream available for this match");
+      setStreamUrl(url);
+    } catch (e: any) {
+      setStreamError(e?.message || "Stream unavailable");
+    } finally {
+      setStreamLoading(false);
+    }
+  };
+
+  const close = () => {
+    setSelected(null);
+    setStreamUrl(null);
+    setStreamError(null);
+  };
+
+  const liveCount = matches.filter((m) => statusVariant(m.status) === "live").length;
+
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Ambient gradient backdrop */}
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute -top-40 left-1/2 h-[500px] w-[900px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute bottom-0 right-0 h-[400px] w-[400px] rounded-full bg-[oklch(var(--live)/0.08)] blur-3xl" />
+      </div>
+
+      <header className="sticky top-0 z-30 border-b border-border/60 bg-background/70 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-lg shadow-primary/30">
+              <Radio className="h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold leading-none tracking-tight">PitchLive</h1>
+              <p className="text-xs text-muted-foreground">Live football streams & scores</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="hidden items-center gap-2 rounded-full border border-border/60 bg-card/60 px-3 py-1.5 text-xs sm:flex">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[oklch(var(--live))] opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-[oklch(var(--live))]" />
+              </span>
+              <span className="font-medium">{liveCount} live now</span>
+            </div>
+            <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+              <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mb-6 flex items-end justify-between">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Today's matches</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</p>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mb-6 flex items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-foreground">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+            <div>
+              <p className="font-medium">Couldn't load matches</p>
+              <p className="text-muted-foreground">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {loading ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <MatchCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : matches.length === 0 && !error ? (
+          <div className="rounded-xl border border-dashed border-border bg-card/40 p-12 text-center">
+            <Radio className="mx-auto h-10 w-10 text-muted-foreground" />
+            <p className="mt-4 font-medium">No live matches right now</p>
+            <p className="mt-1 text-sm text-muted-foreground">Check back soon or refresh to see the latest fixtures.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {matches.map((m) => (
+              <MatchCard key={String(m.id)} match={m} onWatch={handleWatch} />
+            ))}
+          </div>
+        )}
+      </main>
+
+      <Dialog open={!!selected} onOpenChange={(o) => !o && close()}>
+        <DialogContent className="max-w-5xl border-border bg-card p-0 sm:rounded-2xl">
+          <DialogHeader className="border-b border-border/60 px-5 py-4">
+            <DialogTitle className="flex items-center gap-3 text-base">
+              <span className="truncate">
+                {selected?.home?.name} <span className="text-muted-foreground">vs</span> {selected?.away?.name}
+              </span>
+              {selected?.status && <StatusBadge status={selected.status} />}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="relative aspect-video w-full bg-black">
+            {streamLoading && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-muted-foreground">
+                <RefreshCw className="h-6 w-6 animate-spin" />
+                <span className="text-sm">Loading stream…</span>
+              </div>
+            )}
+            {streamError && !streamLoading && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-6 text-center">
+                <AlertCircle className="h-8 w-8 text-destructive" />
+                <p className="font-medium text-foreground">Stream unavailable</p>
+                <p className="text-sm text-muted-foreground">{streamError}</p>
+              </div>
+            )}
+            {streamUrl && !streamLoading && !streamError && (
+              <iframe
+                src={streamUrl}
+                width="100%"
+                height="100%"
+                frameBorder={0}
+                scrolling="no"
+                allow="autoplay; fullscreen; encrypted-media"
+                allowFullScreen
+                className="absolute inset-0 h-full w-full"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
