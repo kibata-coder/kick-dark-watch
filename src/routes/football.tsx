@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Play, RefreshCw, Trophy, AlertCircle } from "lucide-react";
+import { Play, RefreshCw, Trophy } from "lucide-react";
 import { countryFlagUrl } from "@/lib/country-flags";
 
 export const Route = createFileRoute("/football")({
@@ -44,7 +44,7 @@ function extractStreamUrl(raw: any): string | null {
 }
 
 function StatusBadge({ status }: { status?: string }) {
-  if (status === "inprogress") return <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset bg-primary/15 text-primary shadow-[inset_0_0_0_1px_rgba(255,0,0,0.4)]"><span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" /><span className="relative inline-flex h-2 w-2 rounded-full bg-primary" /></span>LIVE</span>;
+  if (status === "inprogress" || status === "live") return <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset bg-primary/15 text-primary shadow-[inset_0_0_0_1px_rgba(255,0,0,0.4)]"><span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" /><span className="relative inline-flex h-2 w-2 rounded-full bg-primary" /></span>LIVE</span>;
   if (status === "finished") return <Badge variant="secondary" className="rounded-full">Finished</Badge>;
   return <Badge variant="outline" className="rounded-full">Upcoming</Badge>;
 }
@@ -57,12 +57,7 @@ function TeamRow({ name, logo }: { name?: string; logo?: string }) {
     <div className="flex items-center gap-3">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted ring-1 ring-border p-1">
         {src ? (
-          <img
-            src={src}
-            alt=""
-            onError={() => setSrc((cur) => (cur !== flag && flag ? flag : null))}
-            className="h-full w-full object-contain"
-          />
+          <img src={src} alt="" onError={() => setSrc((cur) => (cur !== flag && flag ? flag : null))} className="h-full w-full object-contain" />
         ) : (
           <Trophy className="h-4 w-4 text-muted-foreground/60" />
         )}
@@ -97,8 +92,16 @@ function FootballPage() {
     setSelected(m); setStreamUrl(null); setStreamLoading(true);
     try {
       const data = await fetchDetail({ data: { id: String(m.id) } });
-      setStreamUrl(extractStreamUrl(data));
-    } catch (e) { console.error(e); } finally { setStreamLoading(false); }
+      const url = extractStreamUrl(data);
+      if (url) {
+        setStreamUrl(url);
+      } else {
+        setStreamLoading(false);
+      }
+    } catch (e) { 
+      console.error(e); 
+      setStreamLoading(false); 
+    }
   };
 
   return (
@@ -128,9 +131,26 @@ function FootballPage() {
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
         <DialogContent className="max-w-5xl border-border bg-card p-0 overflow-hidden sm:rounded-2xl">
           <DialogHeader className="border-b border-border/60 px-5 py-4"><DialogTitle>{selected?.title || `${selected?.home?.name} vs ${selected?.away?.name}`}</DialogTitle></DialogHeader>
+          
           <div className="relative aspect-video w-full bg-black">
-            {streamLoading && <div className="absolute inset-0 flex items-center justify-center"><RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" /></div>}
-            {streamUrl && !streamLoading && <iframe src={streamUrl} allowFullScreen className="absolute inset-0 h-full w-full border-0" />}
+            {/* The Loading Spinner Overlay */}
+            {streamLoading && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90">
+                <RefreshCw className="h-8 w-8 animate-spin text-primary mb-3" />
+                <span className="text-sm font-medium text-muted-foreground">Connecting to stream...</span>
+              </div>
+            )}
+            
+            {/* The Iframe fading in smoothly via onLoad */}
+            {streamUrl && (
+              <iframe 
+                src={streamUrl} 
+                onLoad={() => setStreamLoading(false)}
+                allow="autoplay; fullscreen; encrypted-media" 
+                allowFullScreen 
+                className={`absolute inset-0 h-full w-full border-0 transition-opacity duration-700 ${streamLoading ? 'opacity-0' : 'opacity-100'}`} 
+              />
+            )}
           </div>
         </DialogContent>
       </Dialog>
