@@ -130,7 +130,7 @@ function RacingPage() {
           <DialogHeader className="border-b border-border/60 px-5 py-4"><DialogTitle>{selected?.title || selected?.home?.name}</DialogTitle></DialogHeader>
           <div className="relative aspect-video w-full bg-black">
             {streamLoading && <div className="absolute inset-0 flex items-center justify-center"><RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" /></div>}
-            {streamUrl && !streamLoading && <iframe src={streamUrl} allowFullScreen className="absolute inset-0 h-full w-full border-0" />}
+            {streamUrl && !streamLoading && <iframe src={streamUrl} allow="autoplay; fullscreen; encrypted-media" allowFullScreen className="absolute inset-0 h-full w-full border-0" />}
           </div>
         </DialogContent>
       </Dialog>
