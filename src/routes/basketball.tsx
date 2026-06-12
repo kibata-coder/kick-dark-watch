@@ -20,24 +20,9 @@ type Match = { id: string | number; title?: string; home?: any; away?: any; leag
 const STREAMFREE_NBA_URL = "https://streamfree.app/embed/basketball/nbatv?server=origin&quality=1080p&category=basketball";
 const BUFFSTREAMS_URL = "https://buffstreams.plus/index18";
 
-// --- THE PERMANENT CARDS (Server 1 & Server 2) ---
 const staticMatches: Match[] = [
-  { 
-    id: "nba-static", 
-    title: "Server 1", 
-    home: { name: "NBA Live", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/0/03/National_Basketball_Association_logo.svg/315px-National_Basketball_Association_logo.svg.png" }, 
-    away: { name: "HD Feed", logo: "" }, 
-    league: { name: "Basketball (24/7)" }, 
-    status: "inprogress" 
-  },
-  { 
-    id: "buff-static", 
-    title: "Server 2", 
-    home: { name: "Global Hoops", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Basketball.png/512px-Basketball.png" }, 
-    away: { name: "HD Feed", logo: "" }, 
-    league: { name: "Live Events" }, 
-    status: "inprogress" 
-  }
+  { id: "nba-static", title: "Server 1", home: { name: "NBA Live", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/0/03/National_Basketball_Association_logo.svg/315px-National_Basketball_Association_logo.svg.png" }, away: { name: "HD Feed", logo: "" }, league: { name: "Basketball (24/7)" }, status: "inprogress" },
+  { id: "buff-static", title: "Server 2", home: { name: "Global Hoops", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Basketball.png/512px-Basketball.png" }, away: { name: "HD Feed", logo: "" }, league: { name: "Live Events" }, status: "inprogress" }
 ];
 
 function deriveStatus(dateMs?: number): string {
@@ -68,12 +53,11 @@ function extractStreamUrl(raw: any): string | null {
 }
 
 function StatusBadge({ status }: { status?: string }) {
-  if (status === "inprogress") return <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset bg-primary/15 text-primary shadow-[inset_0_0_0_1px_rgba(255,0,0,0.4)]"><span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" /><span className="relative inline-flex h-2 w-2 rounded-full bg-primary" /></span>LIVE</span>;
+  if (status === "inprogress" || status === "live") return <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset bg-primary/15 text-primary shadow-[inset_0_0_0_1px_rgba(255,0,0,0.4)]"><span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" /><span className="relative inline-flex h-2 w-2 rounded-full bg-primary" /></span>LIVE</span>;
   if (status === "finished") return <Badge variant="secondary" className="rounded-full">Finished</Badge>;
   return <Badge variant="outline" className="rounded-full">Upcoming</Badge>;
 }
 
-// Using YOUR exact sophisticated image fallback component
 function TeamRow({ name, logo }: { name?: string; logo?: string }) {
   const flag = countryFlagUrl(name) ?? null;
   const initial: string | null = logo && logo.trim() ? logo : flag;
@@ -82,12 +66,7 @@ function TeamRow({ name, logo }: { name?: string; logo?: string }) {
     <div className="flex items-center gap-3">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted ring-1 ring-border p-1">
         {src ? (
-          <img
-            src={src}
-            alt=""
-            onError={() => setSrc((cur) => (cur !== flag && flag ? flag : null))}
-            className="h-full w-full object-contain"
-          />
+          <img src={src} alt="" onError={() => setSrc((cur) => (cur !== flag && flag ? flag : null))} className="h-full w-full object-contain" />
         ) : (
           <Trophy className="h-4 w-4 text-muted-foreground/60" />
         )}
@@ -127,22 +106,22 @@ function BasketballPage() {
   const handleWatch = async (m: Match) => {
     setSelected(m); setStreamUrl(null); setStreamLoading(true);
     
-    if (m.id === "nba-static") { 
-      setStreamUrl(STREAMFREE_NBA_URL); 
-      setStreamLoading(false); 
-      return; 
-    }
-    
-    if (m.id === "buff-static") { 
-      setStreamUrl(BUFFSTREAMS_URL); 
-      setStreamLoading(false); 
-      return; 
-    }
+    // We rely on the iframe's onLoad event to stop the spinner
+    if (m.id === "nba-static") { setStreamUrl(STREAMFREE_NBA_URL); return; }
+    if (m.id === "buff-static") { setStreamUrl(BUFFSTREAMS_URL); return; }
 
     try {
       const data = await fetchDetail({ data: { id: String(m.id) } });
-      setStreamUrl(extractStreamUrl(data));
-    } catch (e) { console.error(e); } finally { setStreamLoading(false); }
+      const url = extractStreamUrl(data);
+      if (url) {
+        setStreamUrl(url);
+      } else {
+        setStreamLoading(false); // Stop loader if API fails to find URL
+      }
+    } catch (e) { 
+      console.error(e); 
+      setStreamLoading(false); 
+    }
   };
 
   return (
@@ -172,14 +151,24 @@ function BasketballPage() {
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
         <DialogContent className="max-w-5xl border-border bg-card p-0 overflow-hidden sm:rounded-2xl">
           <DialogHeader className="border-b border-border/60 px-5 py-4"><DialogTitle>{selected?.title || `${selected?.home?.name} vs ${selected?.away?.name}`}</DialogTitle></DialogHeader>
+          
           <div className="relative aspect-video w-full bg-black">
-            {streamLoading && <div className="absolute inset-0 flex items-center justify-center"><RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" /></div>}
-            {streamUrl && !streamLoading && (
+            {/* The Loading Spinner Overlay */}
+            {streamLoading && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90">
+                <RefreshCw className="h-8 w-8 animate-spin text-primary mb-3" />
+                <span className="text-sm font-medium text-muted-foreground">Connecting to stream...</span>
+              </div>
+            )}
+            
+            {/* The Iframe fading in smoothly via onLoad */}
+            {streamUrl && (
               <iframe 
                 src={streamUrl} 
+                onLoad={() => setStreamLoading(false)}
                 allow="autoplay; fullscreen; encrypted-media" 
                 allowFullScreen 
-                className="absolute inset-0 h-full w-full border-0" 
+                className={`absolute inset-0 h-full w-full border-0 transition-opacity duration-700 ${streamLoading ? 'opacity-0' : 'opacity-100'}`} 
               />
             )}
           </div>
