@@ -90,13 +90,13 @@ function RacingPage() {
     } catch (e) { console.error(e); } finally { setLoading(false); }
   };
 
-  useEffect(() => { load(); }, []);
+  // 300000ms = 5 minutes polling
+  useEffect(() => { load(); const id = setInterval(load, 300000); return () => clearInterval(id); }, []);
 
   const handleWatch = async (m: Match) => {
     setSelected(m); 
     setStreamUrl(null);
     
-    // 1. Instantly catch if the race hasn't started yet
     if (m.status === "upcoming") {
       setStreamLoading(false);
       return;
@@ -104,7 +104,6 @@ function RacingPage() {
 
     setStreamLoading(true);
     
-    // 2. Handle static bypasses
     if (m.id === "f1-static") { setStreamUrl(F1_STREAM_URL); return; }
     if (m.id === "lemans-static") { setStreamUrl(LEMANS_STREAM_URL); return; }
 
@@ -152,8 +151,7 @@ function RacingPage() {
           <DialogHeader className="border-b border-border/60 px-5 py-4"><DialogTitle>{selected?.title || selected?.home?.name}</DialogTitle></DialogHeader>
           
           <div className="relative aspect-video w-full bg-black">
-            
-            {/* UPCOMING STATE: Race hasn't started */}
+            {/* UPCOMING STATE */}
             {selected?.status === "upcoming" && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90 px-4 text-center">
                 <AlertCircle className="mb-3 h-8 w-8 text-muted-foreground" />
