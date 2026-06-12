@@ -7,10 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Play, RefreshCw, Trophy, Radio } from "lucide-react";
+import { Play, RefreshCw, Trophy, Radio, AlertCircle } from "lucide-react";
 import { countryFlagUrl } from "@/lib/country-flags";
 
-// Preserving your specific dynamic asset imports
 import lemansAsset from "@/assets/lemans.jpg.asset.json";
 import skyF1Asset from "@/assets/sky-sports-f1.png.asset.json";
 import wecAsset from "@/assets/wec.png.asset.json";
@@ -55,7 +54,7 @@ function TeamRow({ name, logo }: { name?: string; logo?: string }) {
   const [src, setSrc] = useState<string | null>(initial);
   return (
     <div className="flex items-center gap-3">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted ring-1 ring-border p-1">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted/50 ring-1 ring-border p-1">
         {src ? (
           <img src={src} alt="" onError={() => setSrc((cur) => (cur !== flag && flag ? flag : null))} className="h-full w-full object-contain bg-white/10 rounded-full" />
         ) : (
@@ -94,9 +93,18 @@ function RacingPage() {
   useEffect(() => { load(); }, []);
 
   const handleWatch = async (m: Match) => {
-    setSelected(m); setStreamUrl(null); setStreamLoading(true);
+    setSelected(m); 
+    setStreamUrl(null);
     
-    // Pass control of the loader over to the iframe
+    // 1. Instantly catch if the race hasn't started yet
+    if (m.status === "upcoming") {
+      setStreamLoading(false);
+      return;
+    }
+
+    setStreamLoading(true);
+    
+    // 2. Handle static bypasses
     if (m.id === "f1-static") { setStreamUrl(F1_STREAM_URL); return; }
     if (m.id === "lemans-static") { setStreamUrl(LEMANS_STREAM_URL); return; }
 
@@ -144,16 +152,35 @@ function RacingPage() {
           <DialogHeader className="border-b border-border/60 px-5 py-4"><DialogTitle>{selected?.title || selected?.home?.name}</DialogTitle></DialogHeader>
           
           <div className="relative aspect-video w-full bg-black">
-            {/* The Loading Spinner Overlay */}
-            {streamLoading && (
+            
+            {/* UPCOMING STATE: Race hasn't started */}
+            {selected?.status === "upcoming" && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90 px-4 text-center">
+                <AlertCircle className="mb-3 h-8 w-8 text-muted-foreground" />
+                <span className="text-lg font-medium text-foreground">Race not yet started</span>
+                <span className="mt-1 text-sm text-muted-foreground">Please check back closer to lights out.</span>
+              </div>
+            )}
+
+            {/* ERROR STATE: Stream not found / API failure */}
+            {!streamLoading && !streamUrl && selected?.status !== "upcoming" && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90 px-4 text-center">
+                <AlertCircle className="mb-3 h-8 w-8 text-destructive" />
+                <span className="text-lg font-medium text-foreground">Stream unavailable</span>
+                <span className="mt-1 text-sm text-muted-foreground">The feed for this event could not be located.</span>
+              </div>
+            )}
+
+            {/* LOADING STATE */}
+            {streamLoading && selected?.status !== "upcoming" && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90">
                 <RefreshCw className="h-8 w-8 animate-spin text-primary mb-3" />
                 <span className="text-sm font-medium text-muted-foreground">Connecting to stream...</span>
               </div>
             )}
             
-            {/* The Iframe fading in smoothly via onLoad */}
-            {streamUrl && (
+            {/* PLAYING STATE */}
+            {streamUrl && selected?.status !== "upcoming" && (
               <iframe 
                 src={streamUrl} 
                 onLoad={() => setStreamLoading(false)}
