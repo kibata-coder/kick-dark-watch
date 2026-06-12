@@ -19,7 +19,6 @@ function Index() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-        
         <Link to="/football" className="block outline-none">
           <Card className="group relative overflow-hidden border-border/60 bg-card/80 backdrop-blur transition-all hover:border-primary/50 hover:shadow-[0_0_40px_-10px_oklch(var(--primary)/0.4)]">
             <CardContent className="p-8 flex flex-col items-center text-center">
@@ -41,15 +40,14 @@ function Index() {
               <div className="mb-6 rounded-full bg-primary/10 p-4 text-primary group-hover:scale-110 transition-transform">
                 <Radio className="h-10 w-10" />
               </div>
-              <h2 className="text-2xl font-bold mb-2">Formula 1 Racing</h2>
-              <p className="text-muted-foreground mb-6">Catch the latest Grand Prix action with our dedicated F1 live stream.</p>
+              <h2 className="text-2xl font-bold mb-2">Motorsport & F1</h2>
+              <p className="text-muted-foreground mb-6">Catch Formula 1, Le Mans Endurance, MotoGP, and more.</p>
               <div className="flex items-center text-primary font-semibold">
                 Enter Dashboard <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </div>
             </CardContent>
           </Card>
         </Link>
-
       </div>
     </main>
   );
