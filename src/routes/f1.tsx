@@ -46,10 +46,16 @@ function StatusBadge({ status }: { status?: string }) {
 }
 
 function TeamRow({ name, logo }: { name?: string; logo?: string }) {
+  const [imgError, setImgError] = useState(false);
+  const showImg = logo && logo.trim() && !imgError;
   return (
     <div className="flex items-center gap-3">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted ring-1 ring-border p-1">
-        {logo ? <img src={logo} alt="" className="h-full w-full object-contain bg-white/10 rounded-full" /> : <Trophy className="h-4 w-4 text-muted-foreground" />}
+        {showImg ? (
+          <img src={logo} alt="" onError={() => setImgError(true)} className="h-full w-full object-contain bg-white/10 rounded-full" />
+        ) : (
+          <Trophy className="h-4 w-4 text-muted-foreground/60" />
+        )}
       </div>
       <span className="truncate text-sm font-medium text-foreground">{name}</span>
     </div>
@@ -124,7 +130,7 @@ function RacingPage() {
           <DialogHeader className="border-b border-border/60 px-5 py-4"><DialogTitle>{selected?.title || selected?.home?.name}</DialogTitle></DialogHeader>
           <div className="relative aspect-video w-full bg-black">
             {streamLoading && <div className="absolute inset-0 flex items-center justify-center"><RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" /></div>}
-            {streamUrl && !streamLoading && <iframe src={streamUrl} allowFullScreen className="absolute inset-0 h-full w-full border-0" />}
+            {streamUrl && !streamLoading && <iframe src={streamUrl} allow="autoplay; fullscreen; encrypted-media" allowFullScreen className="absolute inset-0 h-full w-full border-0" />}
           </div>
         </DialogContent>
       </Dialog>
