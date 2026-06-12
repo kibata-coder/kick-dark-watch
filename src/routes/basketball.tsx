@@ -16,6 +16,7 @@ export const Route = createFileRoute("/basketball")({
 
 type Match = { id: string | number; title?: string; home?: any; away?: any; league?: any; status?: string; time?: string; date?: number | string; poster?: string; [k: string]: unknown; };
 
+// --- THE PERMANENT IFRAME EMBED URLS ---
 const STREAMFREE_NBA_URL = "https://streamfree.app/embed/basketball/nbatv?server=origin&quality=1080p&category=basketball";
 const BUFFSTREAMS_URL = "https://buffstreams.plus/index18";
 
@@ -100,13 +101,13 @@ function BasketballPage() {
     }
   };
 
-  useEffect(() => { load(); const id = setInterval(load, 60000); return () => clearInterval(id); }, []);
+  // 300000ms = 5 minutes polling
+  useEffect(() => { load(); const id = setInterval(load, 300000); return () => clearInterval(id); }, []);
 
   const handleWatch = async (m: Match) => {
     setSelected(m); 
     setStreamUrl(null);
     
-    // 1. Instantly catch if the match hasn't started yet
     if (m.status === "upcoming") {
       setStreamLoading(false);
       return;
@@ -114,7 +115,6 @@ function BasketballPage() {
 
     setStreamLoading(true);
     
-    // 2. Handle static bypasses
     if (m.id === "nba-static") { setStreamUrl(STREAMFREE_NBA_URL); return; }
     if (m.id === "buff-static") { setStreamUrl(BUFFSTREAMS_URL); return; }
 
@@ -161,8 +161,7 @@ function BasketballPage() {
           <DialogHeader className="border-b border-border/60 px-5 py-4"><DialogTitle>{selected?.title || `${selected?.home?.name} vs ${selected?.away?.name}`}</DialogTitle></DialogHeader>
           
           <div className="relative aspect-video w-full bg-black">
-            
-            {/* UPCOMING STATE: Match hasn't started */}
+            {/* UPCOMING STATE */}
             {selected?.status === "upcoming" && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90 px-4 text-center">
                 <AlertCircle className="mb-3 h-8 w-8 text-muted-foreground" />
