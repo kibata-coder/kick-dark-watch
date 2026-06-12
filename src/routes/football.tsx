@@ -86,13 +86,14 @@ function FootballPage() {
     } catch (e: any) { setError(e?.message); } finally { setLoading(false); }
   };
 
-  useEffect(() => { load(); const id = setInterval(load, 60000); return () => clearInterval(id); }, []);
+  // 300000ms = 5 minutes polling to protect API limits
+  useEffect(() => { load(); const id = setInterval(load, 300000); return () => clearInterval(id); }, []);
 
   const handleWatch = async (m: Match) => {
     setSelected(m); 
     setStreamUrl(null);
     
-    // 1. Instantly catch if the match hasn't started yet
+    // Prevent loading if upcoming
     if (m.status === "upcoming") {
       setStreamLoading(false);
       return;
@@ -105,7 +106,7 @@ function FootballPage() {
       if (url) {
         setStreamUrl(url);
       } else {
-        setStreamLoading(false);
+        setStreamLoading(false); 
       }
     } catch (e) { 
       console.error(e); 
@@ -142,8 +143,7 @@ function FootballPage() {
           <DialogHeader className="border-b border-border/60 px-5 py-4"><DialogTitle>{selected?.title || `${selected?.home?.name} vs ${selected?.away?.name}`}</DialogTitle></DialogHeader>
           
           <div className="relative aspect-video w-full bg-black">
-            
-            {/* UPCOMING STATE: Match hasn't started */}
+            {/* 1. UPCOMING STATE */}
             {selected?.status === "upcoming" && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90 px-4 text-center">
                 <AlertCircle className="mb-3 h-8 w-8 text-muted-foreground" />
@@ -152,7 +152,7 @@ function FootballPage() {
               </div>
             )}
 
-            {/* ERROR STATE: Stream not found / API failure */}
+            {/* 2. ERROR STATE: Stream not found / API failure */}
             {!streamLoading && !streamUrl && selected?.status !== "upcoming" && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90 px-4 text-center">
                 <AlertCircle className="mb-3 h-8 w-8 text-destructive" />
@@ -161,15 +161,15 @@ function FootballPage() {
               </div>
             )}
 
-            {/* LOADING STATE */}
+            {/* 3. LOADING STATE */}
             {streamLoading && selected?.status !== "upcoming" && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90">
                 <RefreshCw className="h-8 w-8 animate-spin text-primary mb-3" />
                 <span className="text-sm font-medium text-muted-foreground">Connecting to stream...</span>
               </div>
             )}
-            
-            {/* PLAYING STATE */}
+
+            {/* 4. PLAYING STATE */}
             {streamUrl && selected?.status !== "upcoming" && (
               <iframe 
                 src={streamUrl} 
