@@ -50,13 +50,19 @@ function StatusBadge({ status }: { status?: string }) {
 }
 
 function TeamRow({ name, logo }: { name?: string; logo?: string }) {
-  const [imgError, setImgError] = useState(false);
-  const showImg = logo && logo.trim() && !imgError;
+  const flag = countryFlagUrl(name);
+  const initial: string | null = logo && logo.trim() ? logo : flag;
+  const [src, setSrc] = useState<string | null>(initial);
   return (
     <div className="flex items-center gap-3">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted ring-1 ring-border p-1">
-        {showImg ? (
-          <img src={logo} alt="" onError={() => setImgError(true)} className="h-full w-full object-contain" />
+        {src ? (
+          <img
+            src={src}
+            alt=""
+            onError={() => setSrc((cur) => (cur !== flag && flag ? flag : null))}
+            className="h-full w-full object-contain"
+          />
         ) : (
           <Trophy className="h-4 w-4 text-muted-foreground/60" />
         )}
