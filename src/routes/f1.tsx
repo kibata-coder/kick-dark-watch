@@ -9,6 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Skeleton } from "@/components/ui/skeleton";
 import { Play, RefreshCw, Trophy, Radio } from "lucide-react";
 import { countryFlagUrl } from "@/lib/country-flags";
+
+// Preserving your specific dynamic asset imports
 import lemansAsset from "@/assets/lemans.jpg.asset.json";
 import skyF1Asset from "@/assets/sky-sports-f1.png.asset.json";
 import wecAsset from "@/assets/wec.png.asset.json";
@@ -19,7 +21,6 @@ export const Route = createFileRoute("/f1")({
 
 type Match = { id: string | number; title?: string; home?: any; away?: any; league?: any; status?: string; time?: string; date?: number | string; [k: string]: unknown; };
 
-// The specific streamfree links we discussed
 const F1_STREAM_URL = "https://streamfree.app/embed/racing/skyf1?server=origin&quality=1080p&category=racing";
 const LEMANS_STREAM_URL = "https://streamfree.app/embed/racing/lemans?server=origin&quality=1080p&category=racing";
 
@@ -43,7 +44,7 @@ function extractStreamUrl(raw: any): string | null {
 }
 
 function StatusBadge({ status }: { status?: string }) {
-  if (status === "inprogress") return <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset bg-primary/15 text-primary shadow-[inset_0_0_0_1px_rgba(255,0,0,0.4)]"><span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" /><span className="relative inline-flex h-2 w-2 rounded-full bg-primary" /></span>LIVE</span>;
+  if (status === "inprogress" || status === "live") return <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset bg-primary/15 text-primary shadow-[inset_0_0_0_1px_rgba(255,0,0,0.4)]"><span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" /><span className="relative inline-flex h-2 w-2 rounded-full bg-primary" /></span>LIVE</span>;
   if (status === "finished") return <Badge variant="secondary" className="rounded-full">Finished</Badge>;
   return <Badge variant="outline" className="rounded-full">Upcoming</Badge>;
 }
@@ -56,12 +57,7 @@ function TeamRow({ name, logo }: { name?: string; logo?: string }) {
     <div className="flex items-center gap-3">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted ring-1 ring-border p-1">
         {src ? (
-          <img
-            src={src}
-            alt=""
-            onError={() => setSrc((cur) => (cur !== flag && flag ? flag : null))}
-            className="h-full w-full object-contain bg-white/10 rounded-full"
-          />
+          <img src={src} alt="" onError={() => setSrc((cur) => (cur !== flag && flag ? flag : null))} className="h-full w-full object-contain bg-white/10 rounded-full" />
         ) : (
           <Trophy className="h-4 w-4 text-muted-foreground/60" />
         )}
@@ -100,13 +96,22 @@ function RacingPage() {
   const handleWatch = async (m: Match) => {
     setSelected(m); setStreamUrl(null); setStreamLoading(true);
     
-    if (m.id === "f1-static") { setStreamUrl(F1_STREAM_URL); setStreamLoading(false); return; }
-    if (m.id === "lemans-static") { setStreamUrl(LEMANS_STREAM_URL); setStreamLoading(false); return; }
+    // Pass control of the loader over to the iframe
+    if (m.id === "f1-static") { setStreamUrl(F1_STREAM_URL); return; }
+    if (m.id === "lemans-static") { setStreamUrl(LEMANS_STREAM_URL); return; }
 
     try {
       const data = await fetchDetail({ data: { id: String(m.id), category: "motorsport" } });
-      setStreamUrl(extractStreamUrl(data));
-    } catch (e) { console.error(e); } finally { setStreamLoading(false); }
+      const url = extractStreamUrl(data);
+      if (url) {
+        setStreamUrl(url);
+      } else {
+        setStreamLoading(false);
+      }
+    } catch (e) { 
+      console.error(e); 
+      setStreamLoading(false); 
+    }
   };
 
   return (
@@ -137,9 +142,26 @@ function RacingPage() {
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
         <DialogContent className="max-w-5xl border-border bg-card p-0 overflow-hidden sm:rounded-2xl">
           <DialogHeader className="border-b border-border/60 px-5 py-4"><DialogTitle>{selected?.title || selected?.home?.name}</DialogTitle></DialogHeader>
+          
           <div className="relative aspect-video w-full bg-black">
-            {streamLoading && <div className="absolute inset-0 flex items-center justify-center"><RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" /></div>}
-            {streamUrl && !streamLoading && <iframe src={streamUrl} allow="autoplay; fullscreen; encrypted-media" allowFullScreen className="absolute inset-0 h-full w-full border-0" />}
+            {/* The Loading Spinner Overlay */}
+            {streamLoading && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90">
+                <RefreshCw className="h-8 w-8 animate-spin text-primary mb-3" />
+                <span className="text-sm font-medium text-muted-foreground">Connecting to stream...</span>
+              </div>
+            )}
+            
+            {/* The Iframe fading in smoothly via onLoad */}
+            {streamUrl && (
+              <iframe 
+                src={streamUrl} 
+                onLoad={() => setStreamLoading(false)}
+                allow="autoplay; fullscreen; encrypted-media" 
+                allowFullScreen 
+                className={`absolute inset-0 h-full w-full border-0 transition-opacity duration-700 ${streamLoading ? 'opacity-0' : 'opacity-100'}`} 
+              />
+            )}
           </div>
         </DialogContent>
       </Dialog>
