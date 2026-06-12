@@ -50,7 +50,7 @@ function StatusBadge({ status }: { status?: string }) {
 }
 
 function TeamRow({ name, logo }: { name?: string; logo?: string }) {
-  const flag = countryFlagUrl(name);
+  const flag = countryFlagUrl(name) ?? null;
   const initial: string | null = logo && logo.trim() ? logo : flag;
   const [src, setSrc] = useState<string | null>(initial);
   return (
