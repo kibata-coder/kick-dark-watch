@@ -9,6 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Skeleton } from "@/components/ui/skeleton";
 import { Play, RefreshCw, Trophy, Radio } from "lucide-react";
 import { countryFlagUrl } from "@/lib/country-flags";
+import lemansAsset from "@/assets/lemans.jpg.asset.json";
+import skyF1Asset from "@/assets/sky-sports-f1.png.asset.json";
+import wecAsset from "@/assets/wec.png.asset.json";
 
 export const Route = createFileRoute("/f1")({
   component: RacingPage,
@@ -21,8 +24,8 @@ const F1_STREAM_URL = "https://streamfree.app/embed/racing/skyf1?server=origin&q
 const LEMANS_STREAM_URL = "https://streamfree.app/embed/racing/lemans?server=origin&quality=1080p&category=racing";
 
 const staticMatches: Match[] = [
-  { id: "f1-static", title: "Formula 1 Racing", home: { name: "Formula 1 Live", logo: "https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg" }, away: { name: "Sky Sports F1 HD", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/0/05/Sky_Sports_F1_logo.svg/512px-Sky_Sports_F1_logo.svg.png" }, league: { name: "Formula 1 (24/7 Feed)" }, status: "inprogress" },
-  { id: "lemans-static", title: "24 Hours of Le Mans", home: { name: "WEC Endurance", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/WEC_logo.svg/512px-WEC_logo.svg.png" }, away: { name: "Le Mans Feed", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/3/37/24_Hours_of_Le_Mans_logo.svg/512px-24_Hours_of_Le_Mans_logo.svg.png" }, league: { name: "Endurance Racing" }, status: "inprogress" }
+  { id: "f1-static", title: "Formula 1 Racing", home: { name: "Formula 1 Live", logo: "https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg" }, away: { name: "Sky Sports F1 HD", logo: skyF1Asset.url }, league: { name: "Formula 1 (24/7 Feed)" }, status: "inprogress" },
+  { id: "lemans-static", title: "24 Hours of Le Mans", home: { name: "WEC Endurance", logo: wecAsset.url }, away: { name: "Le Mans Feed", logo: lemansAsset.url }, league: { name: "Endurance Racing" }, status: "inprogress" }
 ];
 
 function deriveStatus(dateMs?: number): string {
