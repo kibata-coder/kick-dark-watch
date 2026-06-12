@@ -19,9 +19,7 @@ function NotFoundComponent() {
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">The page you're looking for doesn't exist.</p>
         <div className="mt-6">
           <Link to="/" className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
             Go home
@@ -42,19 +40,12 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
-        </p>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">This page didn't load</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Something went wrong on our end.</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button onClick={() => { router.invalidate(); reset(); }} className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
             Try again
           </button>
-          <Link to="/" className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent">
-            Go home
-          </Link>
         </div>
       </div>
     </div>
@@ -80,13 +71,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        {children}
-        <Scripts />
-      </body>
+      <head><HeadContent /></head>
+      <body>{children}<Scripts /></body>
     </html>
   );
 }
@@ -97,27 +83,20 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-background text-foreground">
-        
-        {/* Ambient background effect for all pages */}
         <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
           <div className="absolute -top-40 left-1/2 h-[500px] w-[900px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
           <div className="absolute bottom-0 right-0 h-[400px] w-[400px] rounded-full blur-3xl" style={{ backgroundColor: "oklch(0.7 0.22 25 / 0.08)" }} />
         </div>
 
-        {/* Global Navigation Header */}
         <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
           <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
             <div className="flex items-center gap-6">
-              
-              {/* App Logo */}
               <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-lg shadow-primary/30">
                   <Radio className="h-4 w-4" />
                 </div>
                 <span className="text-lg font-bold tracking-tight">SOUDsports</span>
               </Link>
-
-              {/* Navigation Links */}
               <nav className="hidden md:flex items-center gap-1">
                 <Link to="/" className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary">
                   <Home className="h-4 w-4" /> Home
@@ -126,14 +105,12 @@ function RootComponent() {
                   <Trophy className="h-4 w-4" /> Football
                 </Link>
                 <Link to="/f1" className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary">
-                  <Radio className="h-4 w-4" /> Formula 1
+                  <Radio className="h-4 w-4" /> Motorsport
                 </Link>
               </nav>
             </div>
           </div>
         </header>
-
-        {/* The current page renders here */}
         <Outlet />
       </div>
     </QueryClientProvider>
