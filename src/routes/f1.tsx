@@ -16,7 +16,7 @@ export const Route = createFileRoute("/f1")({
 
 type Match = { id: string | number; title?: string; home?: any; away?: any; league?: any; status?: string; time?: string; date?: number | string; poster?: string; [k: string]: unknown; };
 
-// --- 24/7 STATIC F1 MATCH ---
+// --- PERMANENT F1 STREAM ---
 const staticF1Match: Match = {
   id: "f1-static-embed",
   title: "Formula 1 Racing",
@@ -27,9 +27,21 @@ const staticF1Match: Match = {
   time: "LIVE",
 };
 const F1_STREAM_URL = "https://streamfree.app/embed/racing/skyf1?server=origin&quality=1080p&category=racing";
-// ----------------------------
 
-// Helper Functions
+// --- PERMANENT LE MANS / ENDURANCE STREAM ---
+const staticLeMansMatch: Match = {
+  id: "lemans-static-embed",
+  title: "24 Hours of Le Mans",
+  home: { name: "WEC Endurance", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/WEC_logo.svg/512px-WEC_logo.svg.png" },
+  away: { name: "Le Mans Feed", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/3/37/24_Hours_of_Le_Mans_logo.svg/512px-24_Hours_of_Le_Mans_logo.svg.png" },
+  league: { name: "Endurance Racing" },
+  status: "live",
+  time: "LIVE",
+};
+// NOTE: Replace this with your actual Le Mans embed link when you have one!
+const LEMANS_STREAM_URL = "https://streamfree.app/embed/racing/lemans?server=origin&quality=1080p&category=racing";
+// ------------------------------------------
+
 function splitTitle(title?: string): { home?: string; away?: string } {
   if (!title) return {};
   const m = title.match(/^(.+?)\s+vs\.?\s+(.+)$/i);
@@ -110,7 +122,8 @@ function TeamRow({ name, logo, label }: { name?: string; logo?: string; label?: 
 
 // Main Page Component
 function RacingPage() {
-  const [matches, setMatches] = useState<Match[]>([staticF1Match]);
+  // 1. Initialize the dashboard with BOTH of our permanent cards!
+  const [matches, setMatches] = useState<Match[]>([staticF1Match, staticLeMansMatch]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Match | null>(null);
@@ -124,14 +137,13 @@ function RacingPage() {
   const load = async () => {
     setLoading(true); setError(null);
     try {
-      // We specifically ask the API for the "motorsport" category!
       const data = await fetchMatches({ data: { category: "motorsport" } });
       const normalized = normalizeMatches(data);
-      // We merge our permanent 24/7 Sky F1 stream with whatever live races are happening
-      setMatches([staticF1Match, ...normalized]);
+      // 2. Spread both permanent streams, followed by the live API results
+      setMatches([staticF1Match, staticLeMansMatch, ...normalized]);
     } catch (e: any) { 
       setError(e?.message || "Could not load dynamic races"); 
-      setMatches([staticF1Match]); // Fallback to at least showing our hardcoded F1 stream
+      setMatches([staticF1Match, staticLeMansMatch]); // Fallback safely
     }
     finally { setLoading(false); }
   };
@@ -141,15 +153,21 @@ function RacingPage() {
   const handleWatch = async (m: Match) => {
     setSelected(m); setStreamUrl(null); setStreamError(null); setStreamLoading(true);
 
-    // Bypass API if it's our hardcoded stream
+    // 3. Bypass API if the user clicks Formula 1
     if (m.id === "f1-static-embed") {
       setStreamUrl(F1_STREAM_URL);
       setStreamLoading(false);
       return;
     }
 
+    // 4. Bypass API if the user clicks Le Mans
+    if (m.id === "lemans-static-embed") {
+      setStreamUrl(LEMANS_STREAM_URL);
+      setStreamLoading(false);
+      return;
+    }
+
     try {
-      // Fetch dynamic link for API motorsport events (MotoGP, NASCAR, etc)
       const data = await fetchDetail({ data: { id: String(m.id), category: "motorsport" } });
       const url = extractStreamUrl(data);
       if (!url) throw new Error("No stream available for this event yet");
@@ -165,7 +183,8 @@ function RacingPage() {
           <h2 className="text-2xl font-bold tracking-tight sm:text-3xl flex items-center gap-2">
             <Radio className="h-6 w-6 text-primary" /> Motorsport & Racing
           </h2>
-          <p className="mt-1 text-sm text-muted-foreground">F1, MotoGP, NASCAR, and more</p>
+          {/* Updated subtitle to welcome Le Mans fans */}
+          <p className="mt-1 text-sm text-muted-foreground">F1, Le Mans Endurance, MotoGP, and more</p>
         </div>
         <Button variant="outline" size="sm" onClick={load} disabled={loading}>
           <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
@@ -176,11 +195,11 @@ function RacingPage() {
         <div className="mb-6 flex items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" /><div><p className="font-medium">Notice</p><p className="text-muted-foreground">{error}</p></div></div>
       )}
 
-      {loading && matches.length === 1 ? (
+      {loading && matches.length === 2 ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-           {/* Static F1 card displays while the rest load */}
           <Skeleton className="h-48 w-full rounded-xl" />
-          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-48 w-full rounded-xl" />)}
+          <Skeleton className="h-48 w-full rounded-xl" />
+          {Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-48 w-full rounded-xl" />)}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
