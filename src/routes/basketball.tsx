@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Play, RefreshCw, Trophy } from "lucide-react";
+import { Play, RefreshCw, Trophy, AlertCircle } from "lucide-react";
 import { countryFlagUrl } from "@/lib/country-flags";
 
 export const Route = createFileRoute("/basketball")({
@@ -16,7 +16,6 @@ export const Route = createFileRoute("/basketball")({
 
 type Match = { id: string | number; title?: string; home?: any; away?: any; league?: any; status?: string; time?: string; date?: number | string; poster?: string; [k: string]: unknown; };
 
-// --- THE PERMANENT IFRAME EMBED URLS ---
 const STREAMFREE_NBA_URL = "https://streamfree.app/embed/basketball/nbatv?server=origin&quality=1080p&category=basketball";
 const BUFFSTREAMS_URL = "https://buffstreams.plus/index18";
 
@@ -104,9 +103,18 @@ function BasketballPage() {
   useEffect(() => { load(); const id = setInterval(load, 60000); return () => clearInterval(id); }, []);
 
   const handleWatch = async (m: Match) => {
-    setSelected(m); setStreamUrl(null); setStreamLoading(true);
+    setSelected(m); 
+    setStreamUrl(null);
     
-    // We rely on the iframe's onLoad event to stop the spinner
+    // 1. Instantly catch if the match hasn't started yet
+    if (m.status === "upcoming") {
+      setStreamLoading(false);
+      return;
+    }
+
+    setStreamLoading(true);
+    
+    // 2. Handle static bypasses
     if (m.id === "nba-static") { setStreamUrl(STREAMFREE_NBA_URL); return; }
     if (m.id === "buff-static") { setStreamUrl(BUFFSTREAMS_URL); return; }
 
@@ -116,7 +124,7 @@ function BasketballPage() {
       if (url) {
         setStreamUrl(url);
       } else {
-        setStreamLoading(false); // Stop loader if API fails to find URL
+        setStreamLoading(false); 
       }
     } catch (e) { 
       console.error(e); 
@@ -153,16 +161,35 @@ function BasketballPage() {
           <DialogHeader className="border-b border-border/60 px-5 py-4"><DialogTitle>{selected?.title || `${selected?.home?.name} vs ${selected?.away?.name}`}</DialogTitle></DialogHeader>
           
           <div className="relative aspect-video w-full bg-black">
-            {/* The Loading Spinner Overlay */}
-            {streamLoading && (
+            
+            {/* UPCOMING STATE: Match hasn't started */}
+            {selected?.status === "upcoming" && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90 px-4 text-center">
+                <AlertCircle className="mb-3 h-8 w-8 text-muted-foreground" />
+                <span className="text-lg font-medium text-foreground">Match not yet started</span>
+                <span className="mt-1 text-sm text-muted-foreground">Please check back closer to tip-off.</span>
+              </div>
+            )}
+
+            {/* ERROR STATE: Stream not found / API failure */}
+            {!streamLoading && !streamUrl && selected?.status !== "upcoming" && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90 px-4 text-center">
+                <AlertCircle className="mb-3 h-8 w-8 text-destructive" />
+                <span className="text-lg font-medium text-foreground">Stream unavailable</span>
+                <span className="mt-1 text-sm text-muted-foreground">The feed for this event could not be located.</span>
+              </div>
+            )}
+
+            {/* LOADING STATE */}
+            {streamLoading && selected?.status !== "upcoming" && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90">
                 <RefreshCw className="h-8 w-8 animate-spin text-primary mb-3" />
                 <span className="text-sm font-medium text-muted-foreground">Connecting to stream...</span>
               </div>
             )}
             
-            {/* The Iframe fading in smoothly via onLoad */}
-            {streamUrl && (
+            {/* PLAYING STATE */}
+            {streamUrl && selected?.status !== "upcoming" && (
               <iframe 
                 src={streamUrl} 
                 onLoad={() => setStreamLoading(false)}
