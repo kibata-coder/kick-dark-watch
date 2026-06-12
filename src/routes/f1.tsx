@@ -25,7 +25,7 @@ const LEMANS_STREAM_URL = "https://streamfree.app/embed/racing/lemans?server=ori
 
 const staticMatches: Match[] = [
   { id: "f1-static", title: "Formula 1 Racing", home: { name: "Formula 1 Live", logo: "https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg" }, away: { name: "Sky Sports F1 HD", logo: skyF1Asset.url }, league: { name: "Formula 1 (24/7 Feed)" }, status: "inprogress" },
-  { id: "lemans-static", title: "24 Hours of Le Mans", home: { name: "WEC Endurance", logo: wecAsset.url }, away: { name: "Le Mans Feed", logo: lemansAsset.url }, league: { name: "Endurance Racing" }, status: "inprogress" }
+  { id: "lemans-static", title: "24 Hours of Le Mans", home: { name: "WEC Endurance", logo: wecAsset.url }, away: { name: "Le Mans Feed", logo: lemansAsset.url }, league: { name: "Endurance Racing" }, status: "upcoming" }
 ];
 
 function deriveStatus(dateMs?: number): string {
