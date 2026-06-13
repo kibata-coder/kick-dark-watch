@@ -14,7 +14,32 @@ export const Route = createFileRoute("/football")({
   component: FootballPage,
 });
 
-type Match = { id: string | number; title?: string; home?: any; away?: any; league?: any; status?: string; time?: string; date?: number | string; poster?: string; [k: string]: unknown; };
+// Added daddyStreamUrl ONLY for our two 24/7 static channels
+type Match = { id: string | number; title?: string; home?: any; away?: any; league?: any; status?: string; time?: string; date?: number | string; poster?: string; daddyStreamUrl?: string; [k: string]: unknown; };
+
+// --- 24/7 PERMANENT CHANNELS ---
+const staticMatches: Match[] = [
+  { 
+    id: "channel-skynews", 
+    title: "24/7 Channel", 
+    home: { name: "Sky Sports News", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/f/f5/Sky_Sports_News_logo.svg/320px-Sky_Sports_News_logo.svg.png" }, 
+    away: { name: "UK Feed", logo: "" }, 
+    league: { name: "Football News" }, 
+    status: "inprogress",
+    // Hardcoded to ID 366
+    daddyStreamUrl: "https://dlhd.pk/stream/stream-366.php" 
+  },
+  { 
+    id: "channel-skypl", 
+    title: "24/7 Channel", 
+    home: { name: "Sky Sports PL", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/0/02/Sky_Sports_Premier_League_logo.svg/320px-Sky_Sports_Premier_League_logo.svg.png" }, 
+    away: { name: "HD Feed", logo: "" }, 
+    league: { name: "Premier League" }, 
+    status: "inprogress",
+    // Hardcoded to ID 130
+    daddyStreamUrl: "https://dlhd.pk/stream/stream-130.php" 
+  }
+];
 
 function deriveStatus(dateMs?: number): string {
   if (!dateMs) return "upcoming";
@@ -29,10 +54,13 @@ function normalizeMatches(raw: any): Match[] {
   return items.map((m) => {
     const dateMs = typeof m.date === "number" ? m.date : undefined;
     return {
-      id: m.id, title: m.title, status: deriveStatus(dateMs), date: dateMs,
-      home: { name: m.teams?.home?.name || "Home", logo: m.teams?.home?.badge },
-      away: { name: m.teams?.away?.name || "Away", logo: m.teams?.away?.badge },
-      league: m.category ? { name: String(m.category) } : undefined,
+      id: m.id, 
+      title: m.title, 
+      status: deriveStatus(dateMs), 
+      date: dateMs,
+      home: { name: m.teams?.home?.name || "Team A", logo: m.teams?.home?.badge },
+      away: { name: m.teams?.away?.name || "Team B", logo: m.teams?.away?.badge },
+      league: m.category ? { name: String(m.category) } : undefined
     };
   });
 }
@@ -68,7 +96,7 @@ function TeamRow({ name, logo }: { name?: string; logo?: string }) {
 }
 
 function FootballPage() {
-  const [matches, setMatches] = useState<Match[]>([]);
+  const [matches, setMatches] = useState<Match[]>(staticMatches);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Match | null>(null);
@@ -82,24 +110,38 @@ function FootballPage() {
     setLoading(true); setError(null);
     try {
       const data = await fetchMatches({ data: { category: "football" } });
-      setMatches(normalizeMatches(data));
-    } catch (e: any) { setError(e?.message); } finally { setLoading(false); }
+      const apiMatches = normalizeMatches(data);
+      // Merges our 24/7 channels with the standard sportsrc API matches
+      setMatches([...staticMatches, ...apiMatches]);
+    } catch (e: any) { 
+      setError(e?.message); 
+      setMatches(staticMatches); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
-  // 300000ms = 5 minutes polling to protect API limits
+  // 300000ms = 5 minutes polling
   useEffect(() => { load(); const id = setInterval(load, 300000); return () => clearInterval(id); }, []);
 
   const handleWatch = async (m: Match) => {
     setSelected(m); 
     setStreamUrl(null);
     
-    // Prevent loading if upcoming
     if (m.status === "upcoming") {
       setStreamLoading(false);
       return;
     }
 
     setStreamLoading(true);
+    
+    // 1. If it is one of our two 24/7 channels, use the Daddy Live link instantly!
+    if (m.daddyStreamUrl) {
+      setStreamUrl(m.daddyStreamUrl);
+      return;
+    }
+
+    // 2. PERFECT ARCHITECTURE: For all standard matches, use the original sportsrc fetch flow!
     try {
       const data = await fetchDetail({ data: { id: String(m.id) } });
       const url = extractStreamUrl(data);
@@ -124,7 +166,7 @@ function FootballPage() {
       {error && <div className="mb-6 p-4 text-sm text-destructive bg-destructive/10 border border-destructive/40 rounded-lg">{error}</div>}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {loading ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-48 w-full rounded-xl" />) : matches.map((m) => (
+        {loading && matches.length === 2 ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-48 w-full rounded-xl" />) : matches.map((m) => (
           <Card key={String(m.id)} className="bg-card/80 backdrop-blur hover:border-primary/40 transition-all flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between pb-3"><span className="text-xs text-muted-foreground truncate">{m.league?.name || "Football"}</span><StatusBadge status={m.status} /></CardHeader>
             <CardContent className="space-y-3 flex-grow">
@@ -143,7 +185,7 @@ function FootballPage() {
           <DialogHeader className="border-b border-border/60 px-5 py-4"><DialogTitle>{selected?.title || `${selected?.home?.name} vs ${selected?.away?.name}`}</DialogTitle></DialogHeader>
           
           <div className="relative aspect-video w-full bg-black">
-            {/* 1. UPCOMING STATE */}
+            {/* UPCOMING STATE */}
             {selected?.status === "upcoming" && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90 px-4 text-center">
                 <AlertCircle className="mb-3 h-8 w-8 text-muted-foreground" />
@@ -152,7 +194,7 @@ function FootballPage() {
               </div>
             )}
 
-            {/* 2. ERROR STATE: Stream not found / API failure */}
+            {/* ERROR STATE */}
             {!streamLoading && !streamUrl && selected?.status !== "upcoming" && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90 px-4 text-center">
                 <AlertCircle className="mb-3 h-8 w-8 text-destructive" />
@@ -161,15 +203,15 @@ function FootballPage() {
               </div>
             )}
 
-            {/* 3. LOADING STATE */}
+            {/* LOADING STATE */}
             {streamLoading && selected?.status !== "upcoming" && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90">
                 <RefreshCw className="h-8 w-8 animate-spin text-primary mb-3" />
                 <span className="text-sm font-medium text-muted-foreground">Connecting to stream...</span>
               </div>
             )}
-
-            {/* 4. PLAYING STATE */}
+            
+            {/* PLAYING STATE */}
             {streamUrl && selected?.status !== "upcoming" && (
               <iframe 
                 src={streamUrl} 
