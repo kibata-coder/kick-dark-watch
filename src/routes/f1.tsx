@@ -9,7 +9,7 @@ import skyF1Asset from "@/assets/sky-sports-f1.png.asset.json";
 import wecAsset from "@/assets/wec.png.asset.json";
 
 const F1_STREAM_URL = "https://streamfree.app/embed/racing/skyf1?server=origin&quality=1080p&category=racing";
-const LEMANS_STREAM_URL = "https://streamfree.app/embed/racing/lemans?server=origin&quality=1080p&category=racing";
+const LEMANS_STREAM_URL = "https://streamfree.app/player/racing/yie58g866enp";
 
 const staticMatches: Match[] = [
   { id: "f1-static", title: "Formula 1 Racing", home: { name: "Formula 1 Live", logo: "https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg" }, away: { name: "Sky Sports F1 HD", logo: skyF1Asset.url }, league: { name: "Formula 1 (24/7 Feed)" }, status: "inprogress" },
