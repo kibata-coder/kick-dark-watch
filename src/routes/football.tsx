@@ -21,19 +21,19 @@ type Match = { id: string | number; title?: string; home?: any; away?: any; leag
 const staticMatches: Match[] = [
   { 
     id: "channel-skynews", 
-    title: "24/7 Channel", 
-    home: { name: "Sky Sports News", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/f/f5/Sky_Sports_News_logo.svg/320px-Sky_Sports_News_logo.svg.png" }, 
-    away: { name: "UK Feed", logo: "" }, 
-    league: { name: "Football News" }, 
+    title: "Sky Sports News", 
+    home: { name: "Sky Sports News", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Sky_Sports_News_-_Logo_2025.svg/1920px-Sky_Sports_News_-_Logo_2025.svg.png?_=20260324104102" }, 
+    away: { name: "Sky Sports News", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Sky_Sports_News_-_Logo_2025.svg/1920px-Sky_Sports_News_-_Logo_2025.svg.png?_=20260324104102" }, 
+    league: { name: "Sky Sports News" }, 
     status: "inprogress",
     // Hardcoded to ID 366
     daddyStreamUrl: "https://dlhd.pk/stream/stream-366.php" 
   },
   { 
     id: "channel-skypl", 
-    title: "24/7 Channel", 
-    home: { name: "Sky Sports PL", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/0/02/Sky_Sports_Premier_League_logo.svg/320px-Sky_Sports_Premier_League_logo.svg.png" }, 
-    away: { name: "HD Feed", logo: "" }, 
+    title: "Sky Sports PL", 
+    home: { name: "Sky Sports PL", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Sky_Sports_Premier_League_-_Logo_2025.svg/1280px-Sky_Sports_Premier_League_-_Logo_2025.svg.png?_=20260324104241" }, 
+    away: { name: "Sky Sports PL", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Sky_Sports_Premier_League_-_Logo_2025.svg/1280px-Sky_Sports_Premier_League_-_Logo_2025.svg.png?_=20260324104241" }, 
     league: { name: "Premier League" }, 
     status: "inprogress",
     // Hardcoded to ID 130
