@@ -4,16 +4,13 @@ import { Radio } from "lucide-react";
 import { SportsPage, SportsPageSkeleton } from "@/components/sports/SportsPage";
 import { matchesQueryOptions } from "@/lib/sports/query";
 import type { Match } from "@/lib/sports/types";
-import lemansAsset from "@/assets/lemans.jpg.asset.json";
-import skyF1Asset from "@/assets/sky-sports-f1.png.asset.json";
-import wecAsset from "@/assets/wec.png.asset.json";
 
 const F1_STREAM_URL = "https://streamfree.app/embed/racing/skyf1?server=origin&quality=1080p&category=racing";
 const LEMANS_STREAM_URL = "https://streamfree.app/embed/racing/yie58g866enp?server=origin&quality=1080p&category=racing";
 
 const staticMatches: Match[] = [
-  { id: "f1-static", title: "Formula 1 Racing", home: { name: "Formula 1 Live", logo: "https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg" }, away: { name: "Sky Sports F1 HD", logo: skyF1Asset.url }, league: { name: "Formula 1 (24/7 Feed)" }, status: "inprogress" },
-  { id: "lemans-static", title: "24 Hours of Le Mans", home: { name: "WEC Endurance", logo: wecAsset.url }, away: { name: "Le Mans Feed", logo: lemansAsset.url }, league: { name: "Endurance Racing" }, status: "inprogress" },
+  { id: "f1-static", title: "Formula 1 Racing", home: { name: "Formula 1 Live", logo: "https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg" }, away: { name: "Sky Sports F1 HD", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Sky_Sports_F1_-_Logo_2025.svg/1280px-Sky_Sports_F1_-_Logo_2025.svg.png?_=20260323223722" }, league: { name: "Motorsport" } },
+  { id: "lemans-static", title: "24 Hours of Le Mans", home: { name: "WEC Endurance", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/WEC_Logo.svg/500px-WEC_Logo.svg.png?_=20191117125257" }, away: { name: "Le Mans Feed", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/24_Hours_of_Le_Mans_logo_%28since_2014%29.svg/1280px-24_Hours_of_Le_Mans_logo_%28since_2014%29.svg.png?_=20240604043410" }, league: { name: "Endurance Racing" } },
 ];
 
 function resolveStaticStream(m: Match): string | null {
