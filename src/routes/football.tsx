@@ -7,15 +7,26 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Play, RefreshCw, Trophy, AlertCircle } from "lucide-react";
+import { Play, RefreshCw, Trophy, AlertCircle, Tv } from "lucide-react";
 import { countryFlagUrl } from "@/lib/country-flags";
 
 export const Route = createFileRoute("/football")({
   component: FootballPage,
 });
 
-// Added daddyStreamUrl ONLY for our two 24/7 static channels
-type Match = { id: string | number; title?: string; home?: any; away?: any; league?: any; status?: string; time?: string; date?: number | string; poster?: string; daddyStreamUrl?: string; [k: string]: unknown; };
+type Match = { 
+  id: string | number; 
+  title?: string; 
+  home?: any; 
+  away?: any; 
+  league?: any; 
+  status?: string; 
+  time?: string; 
+  date?: number | string; 
+  poster?: string; 
+  daddyStreamUrl?: string; 
+  [k: string]: unknown; 
+};
 
 // --- 24/7 PERMANENT CHANNELS ---
 const staticMatches: Match[] = [
@@ -23,20 +34,18 @@ const staticMatches: Match[] = [
     id: "channel-skynews", 
     title: "Sky Sports News", 
     home: { name: "Sky Sports News", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Sky_Sports_News_-_Logo_2025.svg/1920px-Sky_Sports_News_-_Logo_2025.svg.png?_=20260324104102" }, 
-    away: { name: "Sky Sports News", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Sky_Sports_News_-_Logo_2025.svg/1920px-Sky_Sports_News_-_Logo_2025.svg.png?_=20260324104102" }, 
+    away: { name: "Sky Sports News", logo: "" }, 
     league: { name: "Sky Sports News" }, 
     status: "inprogress",
-    // Hardcoded to ID 366
     daddyStreamUrl: "https://dlhd.pk/stream/stream-366.php" 
   },
   { 
     id: "channel-skypl", 
     title: "Sky Sports PL", 
     home: { name: "Sky Sports PL", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Sky_Sports_Premier_League_-_Logo_2025.svg/1280px-Sky_Sports_Premier_League_-_Logo_2025.svg.png?_=20260324104241" }, 
-    away: { name: "Sky Sports PL", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Sky_Sports_Premier_League_-_Logo_2025.svg/1280px-Sky_Sports_Premier_League_-_Logo_2025.svg.png?_=20260324104241" }, 
+    away: { name: "Sky Sports PL", logo: "" }, 
     league: { name: "Premier League" }, 
     status: "inprogress",
-    // Hardcoded to ID 130
     daddyStreamUrl: "https://dlhd.pk/stream/stream-130.php" 
   }
 ];
@@ -111,7 +120,7 @@ function FootballPage() {
     try {
       const data = await fetchMatches({ data: { category: "football" } });
       const apiMatches = normalizeMatches(data);
-      // Merges our 24/7 channels with the standard sportsrc API matches
+      // Merge permanent 24/7 channels with live API data
       setMatches([...staticMatches, ...apiMatches]);
     } catch (e: any) { 
       setError(e?.message); 
@@ -121,7 +130,7 @@ function FootballPage() {
     }
   };
 
-  // 300000ms = 5 minutes polling
+  // Poll for new match data every 5 minutes
   useEffect(() => { load(); const id = setInterval(load, 300000); return () => clearInterval(id); }, []);
 
   const handleWatch = async (m: Match) => {
@@ -135,13 +144,13 @@ function FootballPage() {
 
     setStreamLoading(true);
     
-    // 1. If it is one of our two 24/7 channels, use the Daddy Live link instantly!
+    // Instantly resolve streams for 24/7 configured channels
     if (m.daddyStreamUrl) {
       setStreamUrl(m.daddyStreamUrl);
       return;
     }
 
-    // 2. PERFECT ARCHITECTURE: For all standard matches, use the original sportsrc fetch flow!
+    // Fetch stream URLs dynamically for sportsrc API matches
     try {
       const data = await fetchDetail({ data: { id: String(m.id) } });
       const url = extractStreamUrl(data);
@@ -159,33 +168,103 @@ function FootballPage() {
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-6 flex items-end justify-between">
-        <h2 className="text-2xl font-bold sm:text-3xl">Live Football</h2>
-        <Button variant="outline" size="sm" onClick={load} disabled={loading}><RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh</Button>
+        <div>
+          <h2 className="text-2xl font-bold sm:text-3xl">Live Football</h2>
+          <p className="text-xs text-muted-foreground mt-1">
+            Browse live broadcast matches or jump straight into continuous television streams.
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+          <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
+        </Button>
       </div>
 
       {error && <div className="mb-6 p-4 text-sm text-destructive bg-destructive/10 border border-destructive/40 rounded-lg">{error}</div>}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {loading && matches.length === 2 ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-48 w-full rounded-xl" />) : matches.map((m) => (
-          <Card key={String(m.id)} className="bg-card/80 backdrop-blur hover:border-primary/40 transition-all flex flex-col">
-            <CardHeader className="flex flex-row items-center justify-between pb-3"><span className="text-xs text-muted-foreground truncate">{m.league?.name || "Football"}</span><StatusBadge status={m.status} /></CardHeader>
-            <CardContent className="space-y-3 flex-grow">
-              <TeamRow name={m.home?.name} logo={m.home?.logo} />
-              <TeamRow name={m.away?.name} logo={m.away?.logo} />
-            </CardContent>
-            <CardFooter className="pt-3 mt-auto">
-              <Button onClick={() => handleWatch(m)} className="w-full" size="sm"><Play className="mr-1.5 h-4 w-4" /> Watch</Button>
-            </CardFooter>
-          </Card>
-        ))}
+        {loading && matches.length === 2 ? (
+          Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-48 w-full rounded-xl" />)
+        ) : (
+          matches.map((m) => {
+            const isChannelCard = !!m.daddyStreamUrl;
+
+            // PREMIUM 24/7 CHANNEL LAYOUT
+            if (isChannelCard) {
+              return (
+                <Card 
+                  key={String(m.id)} 
+                  className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border-primary/30 shadow-xl hover:shadow-primary/5 hover:border-primary transition-all duration-300 flex flex-col group min-h-[200px]"
+                >
+                  <div className="absolute right-[-20px] bottom-[-20px] text-muted/5 group-hover:text-primary/5 transition-colors pointer-events-none">
+                    <Tv className="w-40 h-40" />
+                  </div>
+
+                  <CardHeader className="flex flex-row items-center justify-between pb-2 z-10">
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-primary/80 bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">
+                      {m.league?.name || "24/7 Broadcast"}
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-900/30">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      ONLINE
+                    </span>
+                  </CardHeader>
+
+                  <CardContent className="flex flex-col items-center justify-center flex-grow text-center p-4 z-10">
+                    <div className="h-14 w-full flex items-center justify-center p-1 bg-black/20 rounded-lg border border-slate-900 shadow-inner mb-2 transition-transform group-hover:scale-105 duration-300">
+                      {m.home?.logo ? (
+                        <img src={m.home.logo} alt={m.home.name} className="h-full object-contain max-w-[85%]" />
+                      ) : (
+                        <Tv className="h-6 w-6 text-primary" />
+                      )}
+                    </div>
+                    <h4 className="text-base font-bold text-white group-hover:text-primary transition-colors duration-300">
+                      {m.home?.name}
+                    </h4>
+                  </CardContent>
+
+                  <CardFooter className="pt-2 pb-4 px-4 z-10 mt-auto">
+                    <Button 
+                      onClick={() => handleWatch(m)} 
+                      className="w-full bg-slate-900 border border-slate-800 hover:bg-primary hover:text-primary-foreground text-slate-200 font-semibold transition-all duration-300 shadow-md" 
+                      size="sm"
+                    >
+                      <Play className="mr-1.5 h-3.5 w-3.5 fill-current" /> Tune In
+                    </Button>
+                  </CardFooter>
+                </Card>
+              );
+            }
+
+            // STANDARD MATCH LAYOUT
+            return (
+              <Card key={String(m.id)} className="bg-card/80 backdrop-blur hover:border-primary/40 transition-all flex flex-col">
+                <CardHeader className="flex flex-row items-center justify-between pb-3">
+                  <span className="text-xs text-muted-foreground truncate">{m.league?.name || "Football"}</span>
+                  <StatusBadge status={m.status} />
+                </CardHeader>
+                <CardContent className="space-y-3 flex-grow">
+                  <TeamRow name={m.home?.name} logo={m.home?.logo} />
+                  <TeamRow name={m.away?.name} logo={m.away?.logo} />
+                </CardContent>
+                <CardFooter className="pt-3 mt-auto">
+                  <Button onClick={() => handleWatch(m)} className="w-full" size="sm">
+                    <Play className="mr-1.5 h-4 w-4" /> Watch
+                  </Button>
+                </CardFooter>
+              </Card>
+            );
+          })
+        )}
       </div>
 
+      {/* STREAMING MODAL */}
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
         <DialogContent className="max-w-5xl border-border bg-card p-0 overflow-hidden sm:rounded-2xl">
-          <DialogHeader className="border-b border-border/60 px-5 py-4"><DialogTitle>{selected?.title || `${selected?.home?.name} vs ${selected?.away?.name}`}</DialogTitle></DialogHeader>
+          <DialogHeader className="border-b border-border/60 px-5 py-4">
+            <DialogTitle>{selected?.title || `${selected?.home?.name} vs ${selected?.away?.name}`}</DialogTitle>
+          </DialogHeader>
           
           <div className="relative aspect-video w-full bg-black">
-            {/* UPCOMING STATE */}
             {selected?.status === "upcoming" && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90 px-4 text-center">
                 <AlertCircle className="mb-3 h-8 w-8 text-muted-foreground" />
@@ -194,7 +273,6 @@ function FootballPage() {
               </div>
             )}
 
-            {/* ERROR STATE */}
             {!streamLoading && !streamUrl && selected?.status !== "upcoming" && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90 px-4 text-center">
                 <AlertCircle className="mb-3 h-8 w-8 text-destructive" />
@@ -203,7 +281,6 @@ function FootballPage() {
               </div>
             )}
 
-            {/* LOADING STATE */}
             {streamLoading && selected?.status !== "upcoming" && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90">
                 <RefreshCw className="h-8 w-8 animate-spin text-primary mb-3" />
@@ -211,7 +288,6 @@ function FootballPage() {
               </div>
             )}
             
-            {/* PLAYING STATE */}
             {streamUrl && selected?.status !== "upcoming" && (
               <iframe 
                 src={streamUrl} 
