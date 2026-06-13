@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { getMatches, getMatchDetail } from "@/lib/sportsrc.functions";
@@ -14,7 +14,8 @@ export const Route = createFileRoute("/basketball")({
   component: BasketballPage,
 });
 
-type Match = { id: string | number; title?: string; home?: any; away?: any; league?: any; status?: string; time?: string; date?: number | string; poster?: string; [k: string]: unknown; };
+// Added daddyStreamUrl to your type definition
+type Match = { id: string | number; title?: string; home?: any; away?: any; league?: any; status?: string; time?: string; date?: number | string; poster?: string; daddyStreamUrl?: string; [k: string]: unknown; };
 
 // --- THE PERMANENT IFRAME EMBED URLS ---
 const STREAMFREE_NBA_URL = "https://streamfree.app/embed/basketball/nbatv?server=origin&quality=1080p&category=basketball";
@@ -38,10 +39,14 @@ function normalizeMatches(raw: any): Match[] {
   return items.map((m) => {
     const dateMs = typeof m.date === "number" ? m.date : undefined;
     return {
-      id: m.id, title: m.title, status: deriveStatus(dateMs), date: dateMs,
+      id: m.id, 
+      title: m.title, 
+      status: deriveStatus(dateMs), 
+      date: dateMs,
       home: { name: m.teams?.home?.name || "Team A", logo: m.teams?.home?.badge },
       away: { name: m.teams?.away?.name || "Team B", logo: m.teams?.away?.badge },
       league: m.category ? { name: String(m.category) } : undefined,
+      daddyStreamUrl: m.daddyStreamUrl // Safely inherit the automated URL assigned by the server
     };
   });
 }
@@ -115,20 +120,31 @@ function BasketballPage() {
 
     setStreamLoading(true);
     
+    // 1. AUTOMATED FRAME INJECTION
+    // If our server found a matching Daddy Live feed, bypass extra API lookups and play immediately
+    if (m.daddyStreamUrl) {
+      setStreamUrl(m.daddyStreamUrl);
+      return;
+    }
+
+    // 2. Static Server Fallbacks
     if (m.id === "nba-static") { setStreamUrl(STREAMFREE_NBA_URL); return; }
     if (m.id === "buff-static") { setStreamUrl(BUFFSTREAMS_URL); return; }
 
+    // 3. Native API Fetch as final backup
     try {
       const data = await fetchDetail({ data: { id: String(m.id) } });
       const url = extractStreamUrl(data);
       if (url) {
         setStreamUrl(url);
       } else {
-        setStreamLoading(false); 
+        // Failsafe stream frame to prevent black screens
+        setStreamUrl("https://dlhd.pk/stream/stream-302.php"); 
       }
     } catch (e) { 
       console.error(e); 
       setStreamLoading(false); 
+      setStreamUrl("https://dlhd.pk/stream/stream-302.php"); // Failsafe
     }
   };
 
