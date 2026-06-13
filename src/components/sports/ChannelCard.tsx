@@ -17,7 +17,7 @@ function ChannelCardImpl({ match, onWatch }: { match: Match; onWatch: (m: Match)
         </span>
         <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-900/30">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          CHANNEL
+          ONLINE
         </span>
       </CardHeader>
       <CardContent className="flex flex-col items-center justify-center flex-grow text-center p-4 z-10">
