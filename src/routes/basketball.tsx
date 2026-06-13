@@ -7,24 +7,35 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Play, RefreshCw, Trophy, AlertCircle } from "lucide-react";
+import { Play, RefreshCw, Trophy, AlertCircle, Tv } from "lucide-react";
 import { countryFlagUrl } from "@/lib/country-flags";
 
 export const Route = createFileRoute("/basketball")({
   component: BasketballPage,
 });
 
-// Added daddyStreamUrl to your type definition
-type Match = { id: string | number; title?: string; home?: any; away?: any; league?: any; status?: string; time?: string; date?: number | string; poster?: string; daddyStreamUrl?: string; [k: string]: unknown; };
+type Match = { 
+  id: string | number; 
+  title?: string; 
+  home?: any; 
+  away?: any; 
+  league?: any; 
+  status?: string; 
+  time?: string; 
+  date?: number | string; 
+  poster?: string; 
+  daddyStreamUrl?: string; 
+  [k: string]: unknown; 
+};
 
 // --- PERMANENT DADDY LIVE FALLBACKS ---
 const staticMatches: Match[] = [
   { 
     id: "server-1-espn", 
-    title: "ESPN ", 
+    title: "ESPN", 
     home: { name: "ESPN LIVE", logo: "https://upload.wikimedia.org/wikipedia/commons/2/2f/ESPN_wordmark.svg" }, 
-    away: { name: "ESPN LIVE", logo: "https://upload.wikimedia.org/wikipedia/commons/2/2f/ESPN_wordmark.svg" }, 
-    league: { name: "ESPN LIVE" }, 
+    away: { name: "ESPN LIVE", logo: "" }, 
+    league: { name: "ESPN Network" }, 
     status: "inprogress",
     // Directly linked to the stable ESPN network feed
     daddyStreamUrl: "https://dlhd.pk/stream/stream-302.php" 
@@ -33,7 +44,7 @@ const staticMatches: Match[] = [
     id: "server-2-nba", 
     title: "NBA TV", 
     home: { name: "NBA TV", logo: "https://upload.wikimedia.org/wikipedia/fr/9/98/Logo_NBA_TV.svg" }, 
-    away: { name: "NBA TV", logo: "https://upload.wikimedia.org/wikipedia/fr/9/98/Logo_NBA_TV.svg" }, 
+    away: { name: "NBA TV", logo: "" }, 
     league: { name: "Basketball (24/7)" }, 
     status: "inprogress",
     // Directly linked to the stable NBA TV network feed
@@ -121,7 +132,6 @@ function BasketballPage() {
     }
   };
 
-  // 300000ms = 5 minutes polling
   useEffect(() => { load(); const id = setInterval(load, 300000); return () => clearInterval(id); }, []);
 
   const handleWatch = async (m: Match) => {
@@ -135,14 +145,13 @@ function BasketballPage() {
 
     setStreamLoading(true);
     
-    // 1. DADDY LIVE FRAMES (Static Servers & Automated API Matches)
-    // Because we added "daddyStreamUrl" to Server 1 and Server 2 above, they will trigger right here instantly!
+    // 1. Instantly load Daddy Live static channels or API-resolved Daddy links
     if (m.daddyStreamUrl) {
       setStreamUrl(m.daddyStreamUrl);
       return;
     }
 
-    // 2. Native API Fetch (For any other random games not caught by our text scanner)
+    // 2. Native API Fetch for dynamic sportsrc matches
     try {
       const data = await fetchDetail({ data: { id: String(m.id) } });
       const url = extractStreamUrl(data);
@@ -155,40 +164,109 @@ function BasketballPage() {
     } catch (e) { 
       console.error(e); 
       setStreamLoading(false); 
-      setStreamUrl("https://dlhd.pk/stream/stream-302.php"); // Ultimate Failsafe
+      setStreamUrl("https://dlhd.pk/stream/stream-302.php"); 
     }
   };
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-6 flex items-end justify-between">
-        <h2 className="text-2xl font-bold sm:text-3xl">Live Basketball</h2>
-        <Button variant="outline" size="sm" onClick={load} disabled={loading}><RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh</Button>
+        <div>
+          <h2 className="text-2xl font-bold sm:text-3xl">Live Basketball</h2>
+          <p className="text-xs text-muted-foreground mt-1">
+            Browse live broadcast matches or jump straight into continuous television streams.
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+          <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
+        </Button>
       </div>
 
       {error && <div className="mb-6 p-4 text-sm text-destructive bg-destructive/10 border border-destructive/40 rounded-lg">{error}</div>}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {loading && matches.length === 2 ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-48 w-full rounded-xl" />) : matches.map((m) => (
-          <Card key={String(m.id)} className="bg-card/80 backdrop-blur hover:border-primary/40 transition-all flex flex-col">
-            <CardHeader className="flex flex-row items-center justify-between pb-3"><span className="text-xs text-muted-foreground truncate">{m.league?.name || "Basketball"}</span><StatusBadge status={m.status} /></CardHeader>
-            <CardContent className="space-y-3 flex-grow">
-              <TeamRow name={m.home?.name} logo={m.home?.logo} />
-              <TeamRow name={m.away?.name} logo={m.away?.logo} />
-            </CardContent>
-            <CardFooter className="pt-3 mt-auto">
-              <Button onClick={() => handleWatch(m)} className="w-full" size="sm"><Play className="mr-1.5 h-4 w-4" /> Watch</Button>
-            </CardFooter>
-          </Card>
-        ))}
+        {loading && matches.length === 2 ? (
+          Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-48 w-full rounded-xl" />)
+        ) : (
+          matches.map((m) => {
+            // Target the static IDs explicitly to prevent API matches with daddyStreamUrls from rendering as channels
+            const isChannelCard = String(m.id).startsWith("server-");
+
+            if (isChannelCard) {
+              return (
+                <Card 
+                  key={String(m.id)} 
+                  className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border-primary/30 shadow-xl hover:shadow-primary/5 hover:border-primary transition-all duration-300 flex flex-col group min-h-[200px]"
+                >
+                  <div className="absolute right-[-20px] bottom-[-20px] text-muted/5 group-hover:text-primary/5 transition-colors pointer-events-none">
+                    <Tv className="w-40 h-40" />
+                  </div>
+
+                  <CardHeader className="flex flex-row items-center justify-between pb-2 z-10">
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-primary/80 bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">
+                      {m.league?.name || "24/7 Broadcast"}
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-900/30">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      ONLINE
+                    </span>
+                  </CardHeader>
+
+                  <CardContent className="flex flex-col items-center justify-center flex-grow text-center p-4 z-10">
+                    <div className="h-14 w-full flex items-center justify-center p-1 bg-black/20 rounded-lg border border-slate-900 shadow-inner mb-2 transition-transform group-hover:scale-105 duration-300">
+                      {m.home?.logo ? (
+                        <img src={m.home.logo} alt={m.home.name} className="h-full object-contain max-w-[85%]" />
+                      ) : (
+                        <Tv className="h-6 w-6 text-primary" />
+                      )}
+                    </div>
+                    <h4 className="text-base font-bold text-white group-hover:text-primary transition-colors duration-300">
+                      {m.home?.name}
+                    </h4>
+                  </CardContent>
+
+                  <CardFooter className="pt-2 pb-4 px-4 z-10 mt-auto">
+                    <Button 
+                      onClick={() => handleWatch(m)} 
+                      className="w-full bg-slate-900 border border-slate-800 hover:bg-primary hover:text-primary-foreground text-slate-200 font-semibold transition-all duration-300 shadow-md" 
+                      size="sm"
+                    >
+                      <Play className="mr-1.5 h-3.5 w-3.5 fill-current" /> Tune In
+                    </Button>
+                  </CardFooter>
+                </Card>
+              );
+            }
+
+            // STANDARD MATCH LAYOUT
+            return (
+              <Card key={String(m.id)} className="bg-card/80 backdrop-blur hover:border-primary/40 transition-all flex flex-col">
+                <CardHeader className="flex flex-row items-center justify-between pb-3">
+                  <span className="text-xs text-muted-foreground truncate">{m.league?.name || "Basketball"}</span>
+                  <StatusBadge status={m.status} />
+                </CardHeader>
+                <CardContent className="space-y-3 flex-grow">
+                  <TeamRow name={m.home?.name} logo={m.home?.logo} />
+                  <TeamRow name={m.away?.name} logo={m.away?.logo} />
+                </CardContent>
+                <CardFooter className="pt-3 mt-auto">
+                  <Button onClick={() => handleWatch(m)} className="w-full" size="sm">
+                    <Play className="mr-1.5 h-4 w-4" /> Watch
+                  </Button>
+                </CardFooter>
+              </Card>
+            );
+          })
+        )}
       </div>
 
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
         <DialogContent className="max-w-5xl border-border bg-card p-0 overflow-hidden sm:rounded-2xl">
-          <DialogHeader className="border-b border-border/60 px-5 py-4"><DialogTitle>{selected?.title || `${selected?.home?.name} vs ${selected?.away?.name}`}</DialogTitle></DialogHeader>
+          <DialogHeader className="border-b border-border/60 px-5 py-4">
+            <DialogTitle>{selected?.title || `${selected?.home?.name} vs ${selected?.away?.name}`}</DialogTitle>
+          </DialogHeader>
           
           <div className="relative aspect-video w-full bg-black">
-            {/* UPCOMING STATE */}
             {selected?.status === "upcoming" && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90 px-4 text-center">
                 <AlertCircle className="mb-3 h-8 w-8 text-muted-foreground" />
@@ -197,7 +275,6 @@ function BasketballPage() {
               </div>
             )}
 
-            {/* ERROR STATE: Stream not found / API failure */}
             {!streamLoading && !streamUrl && selected?.status !== "upcoming" && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90 px-4 text-center">
                 <AlertCircle className="mb-3 h-8 w-8 text-destructive" />
@@ -206,7 +283,6 @@ function BasketballPage() {
               </div>
             )}
 
-            {/* LOADING STATE */}
             {streamLoading && selected?.status !== "upcoming" && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90">
                 <RefreshCw className="h-8 w-8 animate-spin text-primary mb-3" />
@@ -214,7 +290,6 @@ function BasketballPage() {
               </div>
             )}
             
-            {/* PLAYING STATE */}
             {streamUrl && selected?.status !== "upcoming" && (
               <iframe 
                 src={streamUrl} 
