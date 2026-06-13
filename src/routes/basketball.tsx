@@ -21,8 +21,8 @@ type Match = { id: string | number; title?: string; home?: any; away?: any; leag
 const staticMatches: Match[] = [
   { 
     id: "server-1-espn", 
-    title: "Server 1", 
-    home: { name: "ESPN Live", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png" }, 
+    title: "ESPN ", 
+    home: { name: "ESPN Live", logo: "https://iconscout.com/free-icon/free-espn-logo-icon_461787" }, 
     away: { name: "HD Feed", logo: "" }, 
     league: { name: "Live Sports" }, 
     status: "inprogress",
@@ -31,7 +31,7 @@ const staticMatches: Match[] = [
   },
   { 
     id: "server-2-nba", 
-    title: "Server 2", 
+    title: "NBA TV", 
     home: { name: "NBA TV", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/0/03/National_Basketball_Association_logo.svg/315px-National_Basketball_Association_logo.svg.png" }, 
     away: { name: "HD Feed", logo: "" }, 
     league: { name: "Basketball (24/7)" }, 
