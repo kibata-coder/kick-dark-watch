@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as FootballRouteImport } from './routes/football'
 import { Route as F1RouteImport } from './routes/f1'
+import { Route as BasketballRouteImport } from './routes/basketball'
 import { Route as IndexRouteImport } from './routes/index'
 
 const FootballRoute = FootballRouteImport.update({
@@ -23,6 +24,11 @@ const F1Route = F1RouteImport.update({
   path: '/f1',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BasketballRoute = BasketballRouteImport.update({
+  id: '/basketball',
+  path: '/basketball',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -31,30 +37,34 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/basketball': typeof BasketballRoute
   '/f1': typeof F1Route
   '/football': typeof FootballRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/basketball': typeof BasketballRoute
   '/f1': typeof F1Route
   '/football': typeof FootballRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/basketball': typeof BasketballRoute
   '/f1': typeof F1Route
   '/football': typeof FootballRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/f1' | '/football'
+  fullPaths: '/' | '/basketball' | '/f1' | '/football'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/f1' | '/football'
-  id: '__root__' | '/' | '/f1' | '/football'
+  to: '/' | '/basketball' | '/f1' | '/football'
+  id: '__root__' | '/' | '/basketball' | '/f1' | '/football'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BasketballRoute: typeof BasketballRoute
   F1Route: typeof F1Route
   FootballRoute: typeof FootballRoute
 }
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof F1RouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/basketball': {
+      id: '/basketball'
+      path: '/basketball'
+      fullPath: '/basketball'
+      preLoaderRoute: typeof BasketballRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -87,9 +104,20 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BasketballRoute: BasketballRoute,
   F1Route: F1Route,
   FootballRoute: FootballRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
