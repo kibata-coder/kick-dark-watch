@@ -37,7 +37,7 @@ const staticMatches: Match[] = [
     league: { name: "Basketball (24/7)" }, 
     status: "inprogress",
     // Directly linked to the stable NBA TV network feed
-    daddyStreamUrl: "https://dlhd.pk/stream/stream-277.php" 
+    daddyStreamUrl: "https://dlhd.pk/stream/stream-404.php" 
   }
 ];
 
