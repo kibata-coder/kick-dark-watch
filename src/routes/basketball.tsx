@@ -17,13 +17,28 @@ export const Route = createFileRoute("/basketball")({
 // Added daddyStreamUrl to your type definition
 type Match = { id: string | number; title?: string; home?: any; away?: any; league?: any; status?: string; time?: string; date?: number | string; poster?: string; daddyStreamUrl?: string; [k: string]: unknown; };
 
-// --- THE PERMANENT IFRAME EMBED URLS ---
-const STREAMFREE_NBA_URL = "https://streamfree.app/embed/basketball/nbatv?server=origin&quality=1080p&category=basketball";
-const BUFFSTREAMS_URL = "https://buffstreams.plus/index18";
-
+// --- PERMANENT DADDY LIVE FALLBACKS ---
 const staticMatches: Match[] = [
-  { id: "nba-static", title: "Server 1", home: { name: "NBA Live", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/0/03/National_Basketball_Association_logo.svg/315px-National_Basketball_Association_logo.svg.png" }, away: { name: "HD Feed", logo: "" }, league: { name: "Basketball (24/7)" }, status: "inprogress" },
-  { id: "buff-static", title: "Server 2", home: { name: "Global Hoops", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Basketball.png/512px-Basketball.png" }, away: { name: "HD Feed", logo: "" }, league: { name: "Live Events" }, status: "inprogress" }
+  { 
+    id: "server-1-espn", 
+    title: "Server 1", 
+    home: { name: "ESPN Live", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png" }, 
+    away: { name: "HD Feed", logo: "" }, 
+    league: { name: "Live Sports" }, 
+    status: "inprogress",
+    // Directly linked to the stable ESPN network feed
+    daddyStreamUrl: "https://dlhd.pk/stream/stream-302.php" 
+  },
+  { 
+    id: "server-2-nba", 
+    title: "Server 2", 
+    home: { name: "NBA TV", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/0/03/National_Basketball_Association_logo.svg/315px-National_Basketball_Association_logo.svg.png" }, 
+    away: { name: "HD Feed", logo: "" }, 
+    league: { name: "Basketball (24/7)" }, 
+    status: "inprogress",
+    // Directly linked to the stable NBA TV network feed
+    daddyStreamUrl: "https://dlhd.pk/stream/stream-277.php" 
+  }
 ];
 
 function deriveStatus(dateMs?: number): string {
@@ -120,31 +135,27 @@ function BasketballPage() {
 
     setStreamLoading(true);
     
-    // 1. AUTOMATED FRAME INJECTION
-    // If our server found a matching Daddy Live feed, bypass extra API lookups and play immediately
+    // 1. DADDY LIVE FRAMES (Static Servers & Automated API Matches)
+    // Because we added "daddyStreamUrl" to Server 1 and Server 2 above, they will trigger right here instantly!
     if (m.daddyStreamUrl) {
       setStreamUrl(m.daddyStreamUrl);
       return;
     }
 
-    // 2. Static Server Fallbacks
-    if (m.id === "nba-static") { setStreamUrl(STREAMFREE_NBA_URL); return; }
-    if (m.id === "buff-static") { setStreamUrl(BUFFSTREAMS_URL); return; }
-
-    // 3. Native API Fetch as final backup
+    // 2. Native API Fetch (For any other random games not caught by our text scanner)
     try {
       const data = await fetchDetail({ data: { id: String(m.id) } });
       const url = extractStreamUrl(data);
       if (url) {
         setStreamUrl(url);
       } else {
-        // Failsafe stream frame to prevent black screens
+        // Ultimate Failsafe frame to prevent black screens
         setStreamUrl("https://dlhd.pk/stream/stream-302.php"); 
       }
     } catch (e) { 
       console.error(e); 
       setStreamLoading(false); 
-      setStreamUrl("https://dlhd.pk/stream/stream-302.php"); // Failsafe
+      setStreamUrl("https://dlhd.pk/stream/stream-302.php"); // Ultimate Failsafe
     }
   };
 
