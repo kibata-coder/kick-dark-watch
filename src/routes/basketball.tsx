@@ -22,9 +22,9 @@ const staticMatches: Match[] = [
   { 
     id: "server-1-espn", 
     title: "ESPN ", 
-    home: { name: "ESPN Live", logo: "https://iconscout.com/free-icon/free-espn-logo-icon_461787" }, 
-    away: { name: "HD Feed", logo: "" }, 
-    league: { name: "Live Sports" }, 
+    home: { name: "ESPN LIVE", logo: "https://upload.wikimedia.org/wikipedia/commons/2/2f/ESPN_wordmark.svg" }, 
+    away: { name: "ESPN LIVE", logo: "https://upload.wikimedia.org/wikipedia/commons/2/2f/ESPN_wordmark.svg" }, 
+    league: { name: "ESPN LIVE" }, 
     status: "inprogress",
     // Directly linked to the stable ESPN network feed
     daddyStreamUrl: "https://dlhd.pk/stream/stream-302.php" 
@@ -32,8 +32,8 @@ const staticMatches: Match[] = [
   { 
     id: "server-2-nba", 
     title: "NBA TV", 
-    home: { name: "NBA TV", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/0/03/National_Basketball_Association_logo.svg/315px-National_Basketball_Association_logo.svg.png" }, 
-    away: { name: "HD Feed", logo: "" }, 
+    home: { name: "NBA TV", logo: "https://upload.wikimedia.org/wikipedia/fr/9/98/Logo_NBA_TV.svg" }, 
+    away: { name: "NBA TV", logo: "https://upload.wikimedia.org/wikipedia/fr/9/98/Logo_NBA_TV.svg" }, 
     league: { name: "Basketball (24/7)" }, 
     status: "inprogress",
     // Directly linked to the stable NBA TV network feed
