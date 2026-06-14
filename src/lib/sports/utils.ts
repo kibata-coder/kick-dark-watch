@@ -27,13 +27,32 @@ export function normalizeMatches(raw: any): Match[] {
 
 export function extractStreamUrl(raw: any): string | null {
   if (!raw) return null;
-  const c = [
-    raw?.data?.sources?.[0]?.embedUrl,
-    raw?.sources?.[0]?.embedUrl,
-    raw.stream_url,
-    raw.url,
-    raw.embed,
-    raw.data?.stream_url,
-  ];
-  return c.find((url) => typeof url === "string" && url.trim()) || null;
+  console.log("[Stream Extractor] Incoming SportSRC payload:", raw);
+
+  // Normalize where the sources array might be hiding
+  const sources = Array.isArray(raw?.data) ? raw.data : 
+                  Array.isArray(raw?.sources) ? raw.sources : 
+                  Array.isArray(raw?.data?.sources) ? raw.data.sources :
+                  [raw?.data, raw].filter(Boolean); // fallback to the root object
+
+  // Loop through potential source objects
+  for (const src of sources) {
+    if (!src) continue;
+    
+    // Check every conceivable key SportSRC might use
+    const rawString = src.embedUrl || src.url || src.link || src.embed || src.stream_url;
+    
+    if (typeof rawString === "string" && rawString.trim()) {
+       // If the API returns a raw HTML iframe instead of a neat URL, rip the src out of it
+       if (rawString.includes("<iframe") && rawString.includes("src=")) {
+         const match = rawString.match(/src=["'](.*?)["']/);
+         if (match && match[1]) return match[1];
+       }
+       
+       // Otherwise, return the clean URL string
+       return rawString.trim();
+    }
+  }
+
+  return null;
 }
