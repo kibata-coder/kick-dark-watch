@@ -1,3 +1,4 @@
+// src/routes/football.tsx
 import { Suspense } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { SportsPage, SportsPageSkeleton } from "@/components/sports/SportsPage";
@@ -53,7 +54,11 @@ function FootballPage() {
         subtitle="Browse live broadcast matches or jump straight into continuous television streams."
         defaultLeague="Football"
         staticMatches={staticMatches}
-        isChannelCard={(m) => !!m.daddyStreamUrl}
+        isChannelCard={(m) => {
+          // Strictly cross-examine the LIVE_CHANNEL label to prevent matches showing as channels
+          const leagueName = typeof m.league === "object" && m.league !== null ? (m.league.name || "") : (m.league || "");
+          return leagueName === "LIVE CHANNEL";
+        }}
       />
     </Suspense>
   );
