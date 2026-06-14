@@ -1,4 +1,5 @@
-import { Suspense, lazy, useCallback, useMemo, useState } from "react";
+// src/components/sports/SportsPage.tsx
+import { Suspense, lazy, useCallback, useMemo, useState, useRef, useEffect } from "react";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
@@ -58,37 +59,68 @@ export function SportsPage(props: SportsPageProps) {
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [streamLoading, setStreamLoading] = useState(false);
 
+  const loadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+    };
+  }, []);
+
   const handleWatch = useCallback(
     async (m: Match) => {
       setSelected(m);
       setStreamUrl(null);
+      
+      if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+
       if (m.status === "upcoming") {
         setStreamLoading(false);
         return;
       }
+      
       setStreamLoading(true);
+
+      // Force cancel the loading spinner after 10 seconds 
+      loadingTimeoutRef.current = setTimeout(() => {
+        setStreamLoading(false);
+      }, 10000);
+
       const staticUrl = staticStreamResolver?.(m) ?? m.daddyStreamUrl ?? null;
       if (staticUrl) {
         setStreamUrl(staticUrl);
-        return;
+        return; 
       }
+      
       try {
         const detail = await qc.fetchQuery(matchDetailQueryOptions(String(m.id), category));
         const url = extractStreamUrl(detail);
-        if (url) setStreamUrl(url);
-        else if (detailFallbackUrl) setStreamUrl(detailFallbackUrl);
-        else setStreamLoading(false);
+        if (url) {
+          setStreamUrl(url);
+        } else if (detailFallbackUrl) {
+          setStreamUrl(detailFallbackUrl);
+        } else {
+          if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+          setStreamLoading(false);
+        }
       } catch (e) {
         console.error(e);
-        if (detailFallbackUrl) setStreamUrl(detailFallbackUrl);
-        else setStreamLoading(false);
+        if (detailFallbackUrl) {
+          setStreamUrl(detailFallbackUrl);
+        } else {
+          if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+          setStreamLoading(false);
+        }
       }
     },
     [qc, category, staticStreamResolver, detailFallbackUrl, fetchDetail],
   );
 
   const handleClose = useCallback(() => setSelected(null), []);
-  const handleIframeLoad = useCallback(() => setStreamLoading(false), []);
+  const handleIframeLoad = useCallback(() => {
+    if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+    setStreamLoading(false);
+  }, []);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
