@@ -1,13 +1,57 @@
-// SportSRC free V1 API — no API key required, CORS enabled.
-// Docs: https://sportsrc.org/docs
-const API_BASE = "https://api.sportsrc.org/";
+// src/lib/sportsrc.server.ts
+
+const API_BASES = [
+  "https://api.sportsrc.org/", 
+  import.meta.env.VITE_SPORTSRC_BACKUP_API, 
+].filter(Boolean); // Safely filters out undefined values
 
 export async function callSportsrc(qs: string): Promise<any> {
-  const res = await fetch(`${API_BASE}?${qs}`, {
-    headers: { Accept: "application/json" },
-  });
-  if (!res.ok) {
-    throw new Error(`SportSRC request failed (${res.status})`);
+  let lastError: Error | null = null;
+  
+  // 1. Force Vite to read the variable natively
+  const apiKey = import.meta.env.VITE_SPORTSRC_API_KEY;
+
+  // 2. Log a warning in your terminal if it fails to read the key
+  if (!apiKey) {
+    console.warn("⚠️ WARNING: VITE_SPORTSRC_API_KEY is missing! Falling back to free tier.");
   }
-  return res.json();
+
+  // 3. Attach the key to the query parameter
+  const queryWithKey = apiKey ? `${qs}&key=${apiKey}` : qs;
+
+  for (const apiBase of API_BASES) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000); 
+
+    try {
+      const url = apiBase!.endsWith('/') ? `${apiBase}?${queryWithKey}` : `${apiBase}/?${queryWithKey}`;
+      
+      const res = await fetch(url, {
+        headers: { 
+          "Accept": "application/json",
+          ...(apiKey ? { "x-api-key": apiKey, "Authorization": `Bearer ${apiKey}` } : {})
+        },
+        signal: controller.signal, 
+      });
+
+      clearTimeout(timeoutId); 
+
+      if (res.status === 429) {
+        throw new Error(`Rate limited (429) on endpoint: ${apiBase}`);
+      }
+
+      if (!res.ok) {
+        throw new Error(`SportSRC request failed (${res.status}) on endpoint: ${apiBase}`);
+      }
+      
+      return await res.json();
+
+    } catch (error: any) {
+      clearTimeout(timeoutId); 
+      console.warn(`[SportSRC Failover Tracker] Request failed for ${apiBase}:`, error.message);
+      lastError = error;
+    }
+  }
+
+  throw new Error(`All configured SportSRC APIs failed execution. Final failure trace: ${lastError?.message}`);
 }
