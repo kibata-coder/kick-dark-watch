@@ -4,6 +4,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { SportsPage, SportsPageSkeleton } from "@/components/sports/SportsPage";
 import { matchesQueryOptions } from "@/lib/sports/query";
 import type { Match } from "@/lib/sports/types";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StandingsDashboard } from "@/components/sports/StandingsDashboard";
 
 const staticMatches: Match[] = [
   {
@@ -47,19 +49,44 @@ export const Route = createFileRoute("/football")({
 
 function FootballPage() {
   return (
-    <Suspense fallback={<SportsPageSkeleton />}>
-      <SportsPage
-        category="football"
-        title="Live Football"
-        subtitle="Browse live broadcast matches or jump straight into continuous television streams."
-        defaultLeague="Football"
-        staticMatches={staticMatches}
-        isChannelCard={(m) => {
-          // Strictly cross-examine the LIVE_CHANNEL label to prevent matches showing as channels
-          const leagueName = typeof m.league === "object" && m.league !== null ? (m.league.name || "") : (m.league || "");
-          return leagueName === "LIVE CHANNEL";
-        }}
-      />
-    </Suspense>
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <Tabs defaultValue="live" className="w-full">
+        <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-2xl font-bold sm:text-3xl flex items-center gap-2">
+              Live Football
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Watch matches, track live scores, and view group standings.
+            </p>
+          </div>
+          
+          <TabsList className="grid w-full grid-cols-2 sm:w-[350px]">
+            <TabsTrigger value="live">Live Matches</TabsTrigger>
+            <TabsTrigger value="standings">Standings & Results</TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="live" className="mt-0 outline-none">
+          <Suspense fallback={<SportsPageSkeleton />}>
+            <SportsPage
+              category="football"
+              title="" 
+              subtitle=""
+              defaultLeague="Football"
+              staticMatches={staticMatches}
+              isChannelCard={(m) => {
+                const leagueName = typeof m.league === "object" && m.league !== null ? (m.league.name || "") : (m.league || "");
+                return leagueName === "LIVE CHANNEL";
+              }}
+            />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="standings" className="mt-0 outline-none">
+           <StandingsDashboard />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }
