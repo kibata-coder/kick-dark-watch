@@ -64,10 +64,13 @@ function FootballLiveMatches() {
         defaultLeague="Football"
         staticMatches={staticMatches}
         isChannelCard={(m) => {
+          const league: any = m.league;
           const leagueName =
-            typeof m.league === "object" && m.league !== null
-              ? m.league.name || ""
-              : (m.league as string) || "";
+            typeof league === "object" && league !== null
+              ? league.name || ""
+              : typeof league === "string"
+              ? league
+              : "";
           return leagueName === "LIVE CHANNEL";
         }}
       />

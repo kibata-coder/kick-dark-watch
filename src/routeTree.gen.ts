@@ -13,6 +13,8 @@ import { Route as FootballRouteImport } from './routes/football'
 import { Route as F1RouteImport } from './routes/f1'
 import { Route as BasketballRouteImport } from './routes/basketball'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as FootballIndexRouteImport } from './routes/football.index'
+import { Route as FootballWorldCupRouteImport } from './routes/football.world-cup'
 
 const FootballRoute = FootballRouteImport.update({
   id: '/football',
@@ -34,39 +36,67 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FootballIndexRoute = FootballIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => FootballRoute,
+} as any)
+const FootballWorldCupRoute = FootballWorldCupRouteImport.update({
+  id: '/world-cup',
+  path: '/world-cup',
+  getParentRoute: () => FootballRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/basketball': typeof BasketballRoute
   '/f1': typeof F1Route
-  '/football': typeof FootballRoute
+  '/football': typeof FootballRouteWithChildren
+  '/football/world-cup': typeof FootballWorldCupRoute
+  '/football/': typeof FootballIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/basketball': typeof BasketballRoute
   '/f1': typeof F1Route
-  '/football': typeof FootballRoute
+  '/football/world-cup': typeof FootballWorldCupRoute
+  '/football': typeof FootballIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/basketball': typeof BasketballRoute
   '/f1': typeof F1Route
-  '/football': typeof FootballRoute
+  '/football': typeof FootballRouteWithChildren
+  '/football/world-cup': typeof FootballWorldCupRoute
+  '/football/': typeof FootballIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/basketball' | '/f1' | '/football'
+  fullPaths:
+    | '/'
+    | '/basketball'
+    | '/f1'
+    | '/football'
+    | '/football/world-cup'
+    | '/football/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/basketball' | '/f1' | '/football'
-  id: '__root__' | '/' | '/basketball' | '/f1' | '/football'
+  to: '/' | '/basketball' | '/f1' | '/football/world-cup' | '/football'
+  id:
+    | '__root__'
+    | '/'
+    | '/basketball'
+    | '/f1'
+    | '/football'
+    | '/football/world-cup'
+    | '/football/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BasketballRoute: typeof BasketballRoute
   F1Route: typeof F1Route
-  FootballRoute: typeof FootballRoute
+  FootballRoute: typeof FootballRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -99,14 +129,42 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/football/': {
+      id: '/football/'
+      path: '/'
+      fullPath: '/football/'
+      preLoaderRoute: typeof FootballIndexRouteImport
+      parentRoute: typeof FootballRoute
+    }
+    '/football/world-cup': {
+      id: '/football/world-cup'
+      path: '/world-cup'
+      fullPath: '/football/world-cup'
+      preLoaderRoute: typeof FootballWorldCupRouteImport
+      parentRoute: typeof FootballRoute
+    }
   }
 }
+
+interface FootballRouteChildren {
+  FootballWorldCupRoute: typeof FootballWorldCupRoute
+  FootballIndexRoute: typeof FootballIndexRoute
+}
+
+const FootballRouteChildren: FootballRouteChildren = {
+  FootballWorldCupRoute: FootballWorldCupRoute,
+  FootballIndexRoute: FootballIndexRoute,
+}
+
+const FootballRouteWithChildren = FootballRoute._addFileChildren(
+  FootballRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BasketballRoute: BasketballRoute,
   F1Route: F1Route,
-  FootballRoute: FootballRoute,
+  FootballRoute: FootballRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
