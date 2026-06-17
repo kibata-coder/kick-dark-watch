@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { getMatches, getMatchDetail, getStandings } from "@/lib/sportsrc.functions";
+import { getWorldCupStandings } from "@/lib/worldcup.functions";
 
 const FIVE_MIN = 5 * 60 * 1000;
 
@@ -25,4 +26,13 @@ export const standingsQueryOptions = (league: string) =>
     queryKey: ["sports", "standings", league],
     queryFn: () => getStandings({ data: { league } }),
     staleTime: FIVE_MIN,
+  });
+
+export const worldCupStandingsQueryOptions = () =>
+  queryOptions({
+    queryKey: ["worldcup", "standings"],
+    queryFn: () => getWorldCupStandings(),
+    staleTime: FIVE_MIN,
+    gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
