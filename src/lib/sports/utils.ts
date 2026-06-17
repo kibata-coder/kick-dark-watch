@@ -8,6 +8,26 @@ export function deriveStatus(dateMs?: number): string {
   return "upcoming";
 }
 
+export function formatMatchTime(dateMs?: number): string | undefined {
+  if (!dateMs) return undefined;
+  const d = new Date(dateMs);
+  if (Number.isNaN(d.getTime())) return undefined;
+
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const oneDay = 24 * 60 * 60 * 1000;
+  const dayDiff = Math.floor((new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() - startOfToday) / oneDay);
+
+  const time = new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit", hour12: false }).format(d);
+
+  if (dayDiff === 0) return `Today ${time}`;
+  if (dayDiff === 1) return `Tomorrow ${time}`;
+  if (dayDiff === -1) return `Yesterday ${time}`;
+
+  const date = new Intl.DateTimeFormat(undefined, { weekday: "short", day: "numeric", month: "short" }).format(d);
+  return `${date} ${time}`;
+}
+
 export function normalizeMatches(raw: any): Match[] {
   const items: any[] = Array.isArray(raw?.data) ? raw.data : Array.isArray(raw) ? raw : [];
   return items.map((m) => {
@@ -17,6 +37,7 @@ export function normalizeMatches(raw: any): Match[] {
       title: m.title,
       status: deriveStatus(dateMs),
       date: dateMs,
+      time: formatMatchTime(dateMs),
       home: { name: m.teams?.home?.name || "Team A", logo: m.teams?.home?.badge },
       away: { name: m.teams?.away?.name || "Team B", logo: m.teams?.away?.badge },
       league: m.category ? { name: String(m.category) } : undefined,

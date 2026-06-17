@@ -1,7 +1,7 @@
 import { memo, useCallback } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Play } from "lucide-react";
+import { Play, Clock } from "lucide-react";
 import { StatusBadge } from "./StatusBadge";
 import { TeamRow } from "./TeamRow";
 import type { Match } from "@/lib/sports/types";
@@ -19,7 +19,14 @@ function MatchCardImpl({
   return (
     <Card className="bg-card/80 backdrop-blur hover:border-primary/40 transition-all flex flex-col">
       <CardHeader className="flex flex-row items-center justify-between pb-3">
-        <span className="text-xs text-muted-foreground truncate">{match.league?.name || defaultLeague}</span>
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <span className="text-xs text-muted-foreground truncate">{match.league?.name || defaultLeague}</span>
+          {match.time && (
+            <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground/80">
+              <Clock className="h-3 w-3" /> {match.time}
+            </span>
+          )}
+        </div>
         <StatusBadge status={match.status} />
       </CardHeader>
       <CardContent className="space-y-3 flex-grow">
