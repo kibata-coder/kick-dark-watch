@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getMatches, getMatchDetail } from "@/lib/sportsrc.functions";
+import { getMatches, getMatchDetail, getStandings } from "@/lib/sportsrc.functions";
 
 const FIVE_MIN = 5 * 60 * 1000;
 
@@ -17,5 +17,12 @@ export const matchDetailQueryOptions = (id: string, category: string) =>
   queryOptions({
     queryKey: ["sports", "detail", category, id],
     queryFn: () => getMatchDetail({ data: { id, category } }),
+    staleTime: FIVE_MIN,
+  });
+
+export const standingsQueryOptions = (league: string) =>
+  queryOptions({
+    queryKey: ["sports", "standings", league],
+    queryFn: () => getStandings({ data: { league } }),
     staleTime: FIVE_MIN,
   });
