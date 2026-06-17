@@ -1,6 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertCircle, RefreshCw, ExternalLink } from "lucide-react";
-import { Button } from "@/components/ui/button"; // Added Button import
+import { AlertCircle, RefreshCw } from "lucide-react";
 import type { Match } from "@/lib/sports/types";
 
 export function StreamDialog({
@@ -25,23 +24,12 @@ export function StreamDialog({
   return (
     <Dialog open={!!selected} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-5xl border-border bg-card p-0 overflow-hidden sm:rounded-2xl">
-        {/* Updated DialogHeader to use a flex layout to hold both the Title and the new Button */}
-        <DialogHeader className="flex flex-row items-center justify-between border-b border-border/60 px-5 py-4 space-y-0">
+        <DialogHeader className="border-b border-border/60 px-5 py-4">
           <DialogTitle>
             {selected?.title || `${selected?.home?.name ?? ""}${selected?.away?.name ? ` vs ${selected.away.name}` : ""}`}
           </DialogTitle>
-          
-          {/* If the match is not upcoming and we have a streamUrl, render the fallback button */}
-          {!isUpcoming && streamUrl && (
-            <Button variant="outline" size="sm" asChild>
-              <a href={streamUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="mr-2 h-4 w-4" />
-                Watch in New Tab
-              </a>
-            </Button>
-          )}
         </DialogHeader>
-
+        
         <div className="relative aspect-video w-full bg-black">
           {/* Upcoming State */}
           {isUpcoming && (
@@ -69,14 +57,14 @@ export function StreamDialog({
             </div>
           )}
 
-          {/* Video Iframe State */}
+          {/* Clean, Standard Iframe as per API Docs */}
           {!isUpcoming && streamUrl && (
             <iframe
               src={streamUrl}
               onLoad={onIframeLoad}
               allow="autoplay; fullscreen; encrypted-media"
               allowFullScreen
-              loading="lazy"
+              frameBorder="0"
               className={`absolute inset-0 h-full w-full border-0 transition-opacity duration-700 ${streamLoading ? "opacity-0" : "opacity-100"}`}
             />
           )}
