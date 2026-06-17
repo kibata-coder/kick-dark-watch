@@ -36,3 +36,31 @@ export type TeamStanding = {
   pts?: number;
   [k: string]: unknown;
 };
+
+export type WorldCupTeam = {
+  id: string;
+  name_en: string;
+  name_fa?: string;
+  flag: string;
+  fifa_code: string;
+  iso2: string;
+  groups: string;
+};
+
+export type WorldCupStandingRow = {
+  rank: number;
+  team: { id: string; name: string; flag: string; code: string; iso2: string };
+  mp: number;
+  w: number;
+  d: number;
+  l: number;
+  gf: number;
+  ga: number;
+  gd: number;
+  pts: number;
+};
+
+export type WorldCupGroupStanding = {
+  name: string;
+  rows: WorldCupStandingRow[];
+};
