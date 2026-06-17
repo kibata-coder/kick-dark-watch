@@ -11,3 +11,28 @@ export type Match = {
   daddyStreamUrl?: string;
   [k: string]: unknown;
 };
+
+export type TeamStanding = {
+  id?: string | number;
+  rank?: number;
+  name?: string;
+  teamName?: string;
+  logo?: string;
+  matchesPlayed?: number;
+  played?: number;
+  wins?: number;
+  won?: number;
+  draws?: number;
+  drawn?: number;
+  losses?: number;
+  lost?: number;
+  goalsFor?: number;
+  gf?: number;
+  goalsAgainst?: number;
+  ga?: number;
+  goalDifference?: number;
+  gd?: number;
+  points?: number;
+  pts?: number;
+  [k: string]: unknown;
+};
