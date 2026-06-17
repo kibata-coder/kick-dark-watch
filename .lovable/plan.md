@@ -1,67 +1,72 @@
 ## Goal
 
-The three sport routes (`football.tsx`, `basketball.tsx`, `f1.tsx`) duplicate ~300 lines of nearly identical code: types, status derivation, normalization, stream extraction, `StatusBadge`, `TeamRow`, channel-card layout, dialog player, polling loop. This bloats each route chunk, re-renders unnecessarily, and re-runs the same fetch on every navigation. Refactor for less code, smaller bundles, and faster loads.
+1. Add **match kickoff time** to every football match card.
+2. Add a **sub-page** at `/football/world-cup` showing FIFA World Cup 2026 group standings (Pts, P, W, D, L, GF, GA, GD) using the free public API at `https://worldcup26.ir` (no key required) — your free SportSRC tier won't change.
+
+## Data source
+
+Public, no-auth endpoints from `rezarahiminia/worldcup2026`:
+
+- `GET https://worldcup26.ir/get/groups` → array of 12 groups, each with `teams[]` containing `team_id, mp, w, l, d, pts, gf, ga, gd`.
+- `GET https://worldcup26.ir/get/teams` → 48 teams with `id, name_en, flag, fifa_code, iso2, groups`.
+
+We fetch both once and join `team_id` → team metadata in memory.
+
+Live match times keep coming from the existing SportSRC `?type=matches&sport=football` response (each match has a `date` timestamp the normalizer already captures).
 
 ## Changes
 
-### 1. Extract shared sports module (`src/lib/sports/`)
-- `types.ts` — `Match`, status union.
-- `utils.ts` — `deriveStatus`, `normalizeMatches`, `extractStreamUrl`.
-- `query.ts` — `matchesQueryOptions(category)` and `matchDetailQueryOptions(id, category)` using TanStack Query with `staleTime: 5min` so navigating between pages reuses cache instead of re-polling.
+### 1. Match kickoff time
 
-### 2. Extract shared components (`src/components/sports/`)
-- `StatusBadge.tsx`
-- `TeamRow.tsx` — wrap in `React.memo` so unrelated state updates don't re-render every row.
-- `MatchCard.tsx` — standard layout.
-- `ChannelCard.tsx` — premium 24/7 layout.
-- `StreamDialog.tsx` — modal player with iframe/loading/error states.
-- `SportsPage.tsx` — generic page component that takes `{ category, title, subtitle, staticMatches, channelDetector, fallbackStreamUrl? }` and renders header/grid/dialog. Each route file becomes ~15 lines of config.
+- **`src/lib/sports/utils.ts`** — extend `normalizeMatches` to format `date` (ms) into a friendly `time` string: `Today 21:00`, `Tomorrow 18:30`, or `Sat 18 Jul 20:00` using `Intl.DateTimeFormat` (no new dep). Keep the raw ms on the object too.
+- **`src/components/sports/MatchCard.tsx`** — render `match.time` under the league name with a small `Clock` icon. Hidden when missing (covers the static channel cards).
 
-### 3. Per-route data + metadata
-- Each route adds `head()` with unique `title` and `description` (currently only root sets metadata).
-- Use loader + `ensureQueryData` so SSR primes cache and first paint shows data instead of skeletons.
-- Static channel lists stay in each route file as config passed into `SportsPage`.
+### 2. World Cup standings data layer
 
-### 4. Bundle/runtime optimizations
-- Replace `setInterval` polling with TanStack Query's `refetchInterval: 5 * 60_000` + `refetchOnWindowFocus`.
-- Remove duplicate logo `useState` re-renders: compute initial src once, only swap on error.
-- Iframe gets `loading="lazy"` and only mounts when dialog opens (already the case via conditional render, but verify).
-- Add `head().links` preconnect to `api.sportsrc.org` and `dlhd.pk` on the sport routes that use them so the first request is faster.
-- The router config already has `defaultPreloadStaleTime: 0`; keep it (Query owns freshness).
+- **New** `src/lib/worldcup.functions.ts` with two `createServerFn` calls (server-side fetch keeps the browser CORS-free and lets us cache):
+  - `getWorldCupGroups()` → `https://worldcup26.ir/get/groups`
+  - `getWorldCupTeams()` → `https://worldcup26.ir/get/teams`
+  - 5-min in-memory cache (same pattern as `sportsrc.functions.ts`).
+- **`src/lib/sports/types.ts`** — add `WorldCupTeam`, `WorldCupGroup`, `EnrichedStanding` types.
+- **`src/lib/sports/query.ts`** — add `worldCupStandingsQueryOptions()` that fetches both, joins them server-side via a single combined server fn `getWorldCupStandings()`, and returns:
+  ```ts
+  Array<{ name: "A".."L"; rows: Array<{ rank, team:{name,flag,code,iso2}, mp, w, d, l, gf, ga, gd, pts }> }>
+  ```
+  Rows sorted by `pts ↓, gd ↓, gf ↓, name asc`. 5-min `staleTime`, 30-min `gcTime`.
 
-### 5. Lazy-split heavier UI
-- The `Dialog` + iframe player is only needed on click. Lazy-load `StreamDialog` with `React.lazy` so the initial grid paint doesn't ship dialog/radix-dialog code.
+### 3. Routing — convert football to a layout
 
-## Files
+Current `src/routes/football.tsx` is a leaf. Restructure:
 
-Add:
-- `src/lib/sports/types.ts`
-- `src/lib/sports/utils.ts`
-- `src/lib/sports/query.ts`
-- `src/components/sports/StatusBadge.tsx`
-- `src/components/sports/TeamRow.tsx`
-- `src/components/sports/MatchCard.tsx`
-- `src/components/sports/ChannelCard.tsx`
-- `src/components/sports/StreamDialog.tsx`
-- `src/components/sports/SportsPage.tsx`
+```text
+src/routes/
+  football.tsx              ← layout: shared header + tabs Nav + <Outlet />
+  football.index.tsx        ← /football  (live matches view, current content)
+  football.world-cup.tsx    ← /football/world-cup  (group standings)
+```
 
-Rewrite (small config files):
-- `src/routes/football.tsx`
-- `src/routes/basketball.tsx`
-- `src/routes/f1.tsx`
+- `football.tsx` becomes a thin layout: page header + a TanStack `<Link>`-based tab strip (`Live Matches` → `/football`, `World Cup 2026` → `/football/world-cup`) + `<Outlet />`. Active state uses `activeProps`.
+- `football.index.tsx` keeps the existing live-matches `SportsPage` block and its loader prime for `matchesQueryOptions("football")`.
+- `football.world-cup.tsx`:
+  - `loader` primes `worldCupStandingsQueryOptions()` via `ensureQueryData`.
+  - Component uses `useSuspenseQuery`, renders 12 `Card`s (one per group A–L) in a responsive grid (`grid-cols-1 md:grid-cols-2 xl:grid-cols-3`).
+  - Each card: header `Group A`; a `Table` with columns `#, Team (flag + name + 3-letter code), MP, W, D, L, GF, GA, GD, Pts (bold)`. Top 2 rows get a subtle highlight (qualify), row 3 a muted "playoff" hint, bottom row dimmed.
+  - Own `head()` metadata (title `FIFA World Cup 2026 — Group Standings`, description, og:title, og:description).
+  - `errorComponent` + `notFoundComponent` per TanStack rules; retry button calls `router.invalidate()`.
+- Remove the standings `<Tabs>` UI inside the old `football.tsx` (replaced by route-based navigation). `StandingsDashboard.tsx` stays on disk but is no longer imported.
 
-Unchanged: `__root.tsx`, `index.tsx`, server functions, country-flags lib.
+### 4. SEO
 
-## Expected impact
-
-- ~900 lines → ~150 lines across the three route files.
-- Each sport route's JS chunk drops significantly (shared deps hoisted into one shared chunk that's cached across navigations).
-- No double-fetching when switching tabs within the cache window.
-- Initial paint shows data (loader-primed) instead of skeletons on direct page loads.
-- Better SEO via per-route titles/descriptions.
+- `/football` keeps its existing meta (live streams).
+- `/football/world-cup` gets its own meta + `link rel="preconnect" href="https://worldcup26.ir"`.
 
 ## Out of scope
 
-- Visual/design changes — the rendered UI stays identical.
-- Backend / server function changes.
-- Auth, payments, schemas.
+- Match-by-match World Cup fixtures view (only standings).
+- xG, shotmaps, odds, lineups (premium SportSRC).
+- Visual redesign — reuses existing tokens and shadcn primitives.
+
+## Risk / fallback
+
+- If `worldcup26.ir` is down, the World Cup route shows the route `errorComponent` with a Retry button; nothing else on the site is affected.
+- The free site has no SSL/uptime SLA. We keep the request server-side with a 5-min cache and an 8s timeout so the loader can't hang the page.
