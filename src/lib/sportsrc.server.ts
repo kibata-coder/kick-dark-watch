@@ -1,7 +1,7 @@
 // src/lib/sportsrc.server.ts
 
 const API_BASES = [
-  "https://api.sportsrc.org/", 
+  "https://api.sportsrc.org/v2/", 
   import.meta.env.VITE_SPORTSRC_BACKUP_API, 
 ].filter(Boolean); // Safely filters out undefined values
 
@@ -17,7 +17,7 @@ export async function callSportsrc(qs: string): Promise<any> {
   }
 
   // 3. Attach the key to the query parameter
-  const queryWithKey = apiKey ? `${qs}&key=${apiKey}` : qs;
+  const queryWithKey = apiKey ? `${qs}&api_key=${apiKey}` : qs;
 
   for (const apiBase of API_BASES) {
     const controller = new AbortController();
