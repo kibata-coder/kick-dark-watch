@@ -1,11 +1,11 @@
 // src/lib/sportsrc.server.ts
 
-const API_BASES = [
-  "https://api.sportsrc.org/v2/", 
+const getApiBases = (useV2: boolean) => [
+  useV2 ? "https://api.sportsrc.org/v2/" : "https://api.sportsrc.org/", 
   import.meta.env.VITE_SPORTSRC_BACKUP_API, 
 ].filter(Boolean); // Safely filters out undefined values
 
-export async function callSportsrc(qs: string): Promise<any> {
+export async function callSportsrc(qs: string, useV2: boolean = true): Promise<any> {
   let lastError: Error | null = null;
   
   // 1. Force Vite to read the variable natively
@@ -17,9 +17,9 @@ export async function callSportsrc(qs: string): Promise<any> {
   }
 
   // 3. Attach the key to the query parameter
-  const queryWithKey = apiKey ? `${qs}&api_key=${apiKey}` : qs;
+  const queryWithKey = apiKey ? `${qs}&${useV2 ? 'api_key' : 'key'}=${apiKey}` : qs;
 
-  for (const apiBase of API_BASES) {
+  for (const apiBase of getApiBases(useV2)) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000); 
 

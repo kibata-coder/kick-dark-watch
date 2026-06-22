@@ -18,7 +18,13 @@ export const getMatches = createServerFn({ method: "GET" })
     }
 
     console.log(`[Cache Miss] Fetching fresh ${category} list from API`);
-    const freshData = await callSportsrc(`type=matches&sport=${encodeURIComponent(category)}`);
+    const isV2 = category === "football";
+    const freshData = await callSportsrc(
+      isV2 
+        ? `type=matches&sport=${encodeURIComponent(category)}`
+        : `data=matches&category=${encodeURIComponent(category)}`,
+      isV2
+    );
     
     listCache.set(cacheKey, { timestamp: Date.now(), data: freshData });
     return freshData;
@@ -37,8 +43,12 @@ export const getMatchDetail = createServerFn({ method: "GET" })
     }
 
     console.log(`[Cache Miss] Fetching fresh stream link for match ${data.id} from API`);
+    const isV2 = category === "football";
     const freshData = await callSportsrc(
-      `type=detail&id=${encodeURIComponent(data.id)}`,
+      isV2
+        ? `type=detail&id=${encodeURIComponent(data.id)}`
+        : `data=detail&category=${encodeURIComponent(category)}&id=${encodeURIComponent(data.id)}`,
+      isV2
     );
     
     detailCache.set(cacheKey, { timestamp: Date.now(), data: freshData });
