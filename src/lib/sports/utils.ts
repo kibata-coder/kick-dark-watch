@@ -28,6 +28,28 @@ export function formatMatchTime(dateMs?: number): string | undefined {
   return `${date} ${time}`;
 }
 
+function deriveLeagueName(m: any): string | undefined {
+  if (m.league?.name) return String(m.league.name);
+  
+  if (m.category === "basketball") {
+    const id = String(m.id || "").toLowerCase();
+    const title = String(m.title || "").toLowerCase();
+    const home = String(m.teams?.home?.name || "").toLowerCase();
+    const away = String(m.teams?.away?.name || "").toLowerCase();
+    
+    if (id.includes("ncaa") || title.includes("ncaa")) return "NCAA";
+    if (id.includes("euroleague") || title.includes("euroleague")) return "EuroLeague";
+    if (home.endsWith(" w") || away.endsWith(" w") || title.includes("wnba")) return "WNBA";
+    
+    const nbaTeams = ["lakers", "warriors", "celtics", "heat", "bulls", "knicks", "nets", "76ers", "bucks", "suns", "nuggets", "mavericks", "clippers", "spurs", "timberwolves"];
+    if (nbaTeams.some(t => home.includes(t) || away.includes(t))) return "NBA";
+    
+    return "NBA / Basketball";
+  }
+
+  return m.category ? String(m.category) : undefined;
+}
+
 export function normalizeMatches(raw: any): Match[] {
   let items: any[] = [];
   if (Array.isArray(raw?.data)) {
@@ -53,9 +75,9 @@ export function normalizeMatches(raw: any): Match[] {
       status: deriveStatus(dateMs),
       date: dateMs,
       time: formatMatchTime(dateMs),
-      home: { name: m.teams?.home?.name || "Team A", logo: m.teams?.home?.badge, score: m.score?.current?.home },
-      away: { name: m.teams?.away?.name || "Team B", logo: m.teams?.away?.badge, score: m.score?.current?.away },
-      league: m.category ? { name: String(m.category) } : undefined,
+      home: { name: m.teams?.home?.name || "Team A", logo: m.teams?.home?.badge, score: m.score?.current?.home ?? m.teams?.home?.score },
+      away: { name: m.teams?.away?.name || "Team B", logo: m.teams?.away?.badge, score: m.score?.current?.away ?? m.teams?.away?.score },
+      league: { name: deriveLeagueName(m) },
       daddyStreamUrl: m.daddyStreamUrl,
     };
   });
