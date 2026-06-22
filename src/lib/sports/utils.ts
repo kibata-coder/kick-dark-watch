@@ -29,17 +29,32 @@ export function formatMatchTime(dateMs?: number): string | undefined {
 }
 
 export function normalizeMatches(raw: any): Match[] {
-  const items: any[] = Array.isArray(raw?.data) ? raw.data : Array.isArray(raw) ? raw : [];
+  let items: any[] = [];
+  if (Array.isArray(raw?.data)) {
+    if (raw.data.length > 0 && Array.isArray(raw.data[0].matches)) {
+      raw.data.forEach((group: any) => {
+        const leagueName = group.league?.name || "Unknown League";
+        group.matches.forEach((m: any) => {
+          items.push({ ...m, category: leagueName });
+        });
+      });
+    } else {
+      items = raw.data;
+    }
+  } else if (Array.isArray(raw)) {
+    items = raw;
+  }
+
   return items.map((m) => {
-    const dateMs = typeof m.date === "number" ? m.date : undefined;
+    const dateMs = typeof m.timestamp === "number" ? m.timestamp : typeof m.date === "number" ? m.date : undefined;
     return {
       id: m.id,
       title: m.title,
       status: deriveStatus(dateMs),
       date: dateMs,
       time: formatMatchTime(dateMs),
-      home: { name: m.teams?.home?.name || "Team A", logo: m.teams?.home?.badge },
-      away: { name: m.teams?.away?.name || "Team B", logo: m.teams?.away?.badge },
+      home: { name: m.teams?.home?.name || "Team A", logo: m.teams?.home?.badge, score: m.score?.current?.home },
+      away: { name: m.teams?.away?.name || "Team B", logo: m.teams?.away?.badge, score: m.score?.current?.away },
       league: m.category ? { name: String(m.category) } : undefined,
       daddyStreamUrl: m.daddyStreamUrl,
     };

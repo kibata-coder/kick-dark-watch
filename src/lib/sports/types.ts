@@ -1,8 +1,8 @@
 export type Match = {
   id: string | number;
   title?: string;
-  home?: { name?: string; logo?: string };
-  away?: { name?: string; logo?: string };
+  home?: { name?: string; logo?: string; score?: number | string };
+  away?: { name?: string; logo?: string; score?: number | string };
   league?: { name?: string };
   status?: string;
   time?: string;

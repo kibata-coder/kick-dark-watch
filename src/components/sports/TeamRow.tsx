@@ -2,7 +2,7 @@ import { memo, useState } from "react";
 import { Trophy } from "lucide-react";
 import { countryFlagUrl } from "@/lib/country-flags";
 
-function TeamRowImpl({ name, logo }: { name?: string; logo?: string }) {
+function TeamRowImpl({ name, logo, score }: { name?: string; logo?: string; score?: string | number }) {
   const flag = countryFlagUrl(name) ?? null;
   const initial: string | null = logo && logo.trim() ? logo : flag;
   const [src, setSrc] = useState<string | null>(initial);
@@ -22,7 +22,10 @@ function TeamRowImpl({ name, logo }: { name?: string; logo?: string }) {
           <Trophy className="h-4 w-4 text-muted-foreground/60" />
         )}
       </div>
-      <span className="truncate text-sm font-medium text-foreground">{name}</span>
+      <span className="truncate text-sm font-medium text-foreground flex-grow">{name}</span>
+      {score !== undefined && score !== null && (
+        <span className="text-sm font-bold text-foreground">{score}</span>
+      )}
     </div>
   );
 }
