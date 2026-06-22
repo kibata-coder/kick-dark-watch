@@ -69,14 +69,29 @@ export function normalizeMatches(raw: any): Match[] {
 
   return items.map((m) => {
     const dateMs = typeof m.timestamp === "number" ? m.timestamp : typeof m.date === "number" ? m.date : undefined;
+    
+    // Fallback logic for missing team names (frequently missing in some V1 basketball streams)
+    let homeName = m.teams?.home?.name;
+    let awayName = m.teams?.away?.name;
+    if (!homeName || !awayName) {
+      if (m.title) {
+        let parts = String(m.title).split(" vs ");
+        if (parts.length !== 2) parts = String(m.title).split(" - ");
+        if (parts.length === 2) {
+          homeName = homeName || parts[0].trim();
+          awayName = awayName || parts[1].trim();
+        }
+      }
+    }
+
     return {
       id: m.id,
       title: m.title,
       status: deriveStatus(dateMs),
       date: dateMs,
       time: formatMatchTime(dateMs),
-      home: { name: m.teams?.home?.name || "Team A", logo: m.teams?.home?.badge, score: m.score?.current?.home ?? m.teams?.home?.score },
-      away: { name: m.teams?.away?.name || "Team B", logo: m.teams?.away?.badge, score: m.score?.current?.away ?? m.teams?.away?.score },
+      home: { name: homeName || "Team A", logo: m.teams?.home?.badge, score: m.score?.current?.home ?? m.teams?.home?.score },
+      away: { name: awayName || "Team B", logo: m.teams?.away?.badge, score: m.score?.current?.away ?? m.teams?.away?.score },
       league: { name: deriveLeagueName(m) },
       daddyStreamUrl: m.daddyStreamUrl,
     };
