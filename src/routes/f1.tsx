@@ -5,9 +5,9 @@ import { SportsPage, SportsPageSkeleton } from "@/components/sports/SportsPage";
 import { matchesQueryOptions } from "@/lib/sports/query";
 import type { Match } from "@/lib/sports/types";
 const F1_SOURCES = [
-  { label: "Server 1 (dlhd)",        url: "https://dlhd.pk/stream/stream-60.php" },
-  { label: "Server 2 (StreamEast)",  url: "https://v2.streameast.ga/f1/lenovo-austrian-grand-prix-f1-qual-401839076/" },
-  { label: "Server 3 (Buffstreams)", url: "https://buffstreams.plus/title-game/formula-1/formula-1-2026-austria-gp-live-streams-links" },
+  { label: "Server 1", url: "https://dlhd.pk/stream/stream-60.php" },
+  { label: "Server 2", url: "https://v2.streameast.ga/f1/lenovo-austrian-grand-prix-f1-qual-401839076/" },
+  { label: "Server 3", url: "https://buffstreams.plus/title-game/formula-1/formula-1-2026-austria-gp-live-streams-links" },
 ];
 
 const staticMatches: Match[] = [
