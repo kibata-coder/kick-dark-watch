@@ -10,10 +10,12 @@ function MatchCardImpl({
   match,
   defaultLeague,
   onWatch,
+  isPortrait,
 }: {
   match: Match;
   defaultLeague: string;
   onWatch: (m: Match) => void;
+  isPortrait?: boolean;
 }) {
   const handleClick = useCallback(() => onWatch(match), [match, onWatch]);
   return (
@@ -30,8 +32,8 @@ function MatchCardImpl({
         <StatusBadge status={match.status} />
       </CardHeader>
       <CardContent className="space-y-3 flex-grow">
-        <TeamRow name={match.home?.name} logo={match.home?.logo} score={match.home?.score} />
-        <TeamRow name={match.away?.name} logo={match.away?.logo} score={match.away?.score} />
+        <TeamRow name={match.home?.name} logo={match.home?.logo} score={match.home?.score} isPortrait={isPortrait} />
+        <TeamRow name={match.away?.name} logo={match.away?.logo} score={match.away?.score} isPortrait={isPortrait} />
       </CardContent>
       <CardFooter className="pt-3 mt-auto">
         <Button onClick={handleClick} className="w-full" size="sm">

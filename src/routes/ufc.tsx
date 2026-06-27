@@ -1,71 +1,43 @@
-import { Suspense } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { Flame } from "lucide-react";
-import { SportsPage, SportsPageSkeleton } from "@/components/sports/SportsPage";
-import { matchesQueryOptions } from "@/lib/sports/query";
-import type { Match } from "@/lib/sports/types";
-
-const UFC_SOURCES = [
-  { label: "Server 1", url: "https://streams.center/embed/ch48.php" },
-];
-
-const staticMatches: Match[] = [
-  {
-    id: "ufc-static",
-    title: "UFC Fight Night: Fiziev vs Torres",
-    status: "inprogress",
-    date: new Date("2026-06-27T14:00:00Z").getTime(),
-    time: "17:00 EAT",
-    home: {
-      name: "Rafael Fiziev",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Rafael_Fiziev.jpg/330px-Rafael_Fiziev.jpg",
-    },
-    away: {
-      name: "Manuel Torres",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/UFC_Logo.svg/320px-UFC_Logo.svg.png",
-    },
-    league: { name: "UFC Fight Night" },
-  },
-];
-
-function resolveUFCSources(m: Match) {
-  if (m.id === "ufc-static") return UFC_SOURCES;
-  return null;
-}
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/ufc")({
-  head: () => ({
-    meta: [
-      { title: "UFC & MMA Live Streams — SOUDsports" },
-      { name: "description", content: "Watch UFC Fight Night, MMA bouts, and combat sports live on SOUDsports." },
-      { property: "og:title", content: "UFC & MMA Live Streams — SOUDsports" },
-      { property: "og:description", content: "Watch UFC Fight Night and MMA events live." },
-    ],
-    links: [
-      { rel: "preconnect", href: "https://streams.center" },
-    ],
-  }),
-  loader: ({ context }) => {
-    context.queryClient.ensureQueryData(matchesQueryOptions("mma"));
-  },
-  component: UFCPage,
+  component: UFCLayout,
 });
 
-function UFCPage() {
+function UFCLayout() {
   return (
-    <Suspense fallback={<SportsPageSkeleton />}>
-      <SportsPage
-        category="mma"
-        title="UFC & MMA"
-        subtitle="UFC Fight Night, Bellator, ONE Championship, and more"
-        titleIcon={<Flame className="h-6 w-6 text-primary" />}
-        defaultLeague="UFC"
-        staticMatches={staticMatches}
-        isChannelCard={() => false}
-        staticStreamSources={resolveUFCSources}
-        upcomingLabel="Fight not yet started"
-        upcomingSub="Please check back closer to fight time."
-      />
-    </Suspense>
+    <div className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold sm:text-3xl flex items-center gap-2">
+          UFC & MMA
+        </h2>
+        <p className="text-xs text-muted-foreground mt-1">
+          UFC Fight Night, Bellator, ONE Championship, and more.
+        </p>
+      </div>
+
+      <nav className="flex gap-2 border-b mb-2 -mx-1">
+        <UFCTab to="/ufc">Live Matches</UFCTab>
+        <UFCTab to="/ufc/fighters">Fighters Information</UFCTab>
+      </nav>
+
+      <Outlet />
+    </div>
+  );
+}
+
+function UFCTab({ to, children }: { to: string; children: React.ReactNode }) {
+  return (
+    <Link
+      to={to}
+      activeOptions={{ exact: true }}
+      className="relative px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+      activeProps={{
+        className:
+          "relative px-3 py-2 text-sm font-medium text-foreground after:absolute after:inset-x-3 after:-bottom-px after:h-0.5 after:bg-primary",
+      }}
+    >
+      {children}
+    </Link>
   );
 }

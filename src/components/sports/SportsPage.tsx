@@ -155,7 +155,7 @@ export function SportsPage(props: SportsPageProps) {
           isChannelCard(m) ? (
             <ChannelCard key={String(m.id)} match={m} onWatch={handleWatch} />
           ) : (
-            <MatchCard key={String(m.id)} match={m} defaultLeague={defaultLeague} onWatch={handleWatch} />
+            <MatchCard key={String(m.id)} match={m} defaultLeague={defaultLeague} onWatch={handleWatch} isPortrait={category === "mma"} />
           ),
         )}
       </div>
