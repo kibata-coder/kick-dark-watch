@@ -7,7 +7,7 @@ import type { Match } from "@/lib/sports/types";
 
 
 
-const F1_STREAM_URL = "https://gooz.aapmains.net/new-stream-embed/52517";
+const F1_STREAM_URL = "https://buffstreams.plus/title-game/formula-1/formula-1-2026-austria-gp-live-streams-links";
 
 const staticMatches: Match[] = [
   { 
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/f1")({
     ],
     links: [
       { rel: "preconnect", href: "https://api.sportsrc.org" },
-      { rel: "preconnect", href: "https://gooz.aapmains.net" },
+      { rel: "preconnect", href: "https://buffstreams.plus" },
     ],
   }),
   loader: ({ context }) => {
