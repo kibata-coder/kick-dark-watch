@@ -3,7 +3,7 @@ import { Outlet, Link, createRootRouteWithContext, useRouter, HeadContent, Scrip
 import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { Radio, Trophy, Home } from "lucide-react";
+import { Radio, Trophy, Home, Flame } from "lucide-react";
 
 function NotFoundComponent() {
   return (
@@ -71,6 +71,7 @@ function RootComponent() {
                 <Link to="/football" className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary"><Trophy className="h-4 w-4" /> Football</Link>
                 <Link to="/basketball" className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary"><Trophy className="h-4 w-4" /> Basketball</Link>
                 <Link to="/f1" className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary"><Radio className="h-4 w-4" /> Motorsport</Link>
+                <Link to="/ufc" className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary"><Flame className="h-4 w-4" /> UFC</Link>
               </nav>
             </div>
           </div>
