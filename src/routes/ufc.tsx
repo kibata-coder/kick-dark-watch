@@ -14,8 +14,16 @@ const staticMatches: Match[] = [
     id: "ufc-static",
     title: "UFC Fight Night: Fiziev vs Torres",
     status: "inprogress",
-    home: { name: "Rafael Fiziev", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/UFC_Logo.svg/320px-UFC_Logo.svg.png" },
-    away: { name: "Ilia Torres", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/UFC_Logo.svg/320px-UFC_Logo.svg.png" },
+    date: new Date("2026-06-27T14:00:00Z").getTime(),
+    time: "17:00 EAT",
+    home: {
+      name: "Rafael Fiziev",
+      logo: "https://dmxg5wxfqgde4.cloudfront.net/styles/athlete_bio_full_body/s3/2024-06/FIZIEV_RAFAEL_L_BELT.png?itok=dGqLGLmL",
+    },
+    away: {
+      name: "Manuel Torres",
+      logo: "https://dmxg5wxfqgde4.cloudfront.net/styles/athlete_bio_full_body/s3/2025-04/TORRES_MANUEL_L.png?itok=Lp3GFk7A",
+    },
     league: { name: "UFC Fight Night" },
   },
 ];
