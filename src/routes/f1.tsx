@@ -5,9 +5,9 @@ import { SportsPage, SportsPageSkeleton } from "@/components/sports/SportsPage";
 import { matchesQueryOptions } from "@/lib/sports/query";
 import type { Match } from "@/lib/sports/types";
 const F1_SOURCES = [
-  { label: "Server 1", url: "https://dlhd.pk/stream/stream-60.php" },
+  { label: "Server 1", url: "https://streams.center/embed/ch49.php" },
   { label: "Server 2", url: "https://f1live.dpdns.org/embed?channelId=23" },
-  { label: "Server 3", url: "https://streams.center/embed/ch49.php" },
+  { label: "Server 3", url: "https://dlhd.pk/stream/stream-60.php" },
 ];
 
 const staticMatches: Match[] = [
