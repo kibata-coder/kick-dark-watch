@@ -136,19 +136,21 @@ export function SportsPage(props: SportsPageProps) {
   }, []);
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mb-6 flex items-end justify-between">
-        <div>
-          <h2 className="text-2xl font-bold sm:text-3xl flex items-center gap-2">
-            {titleIcon}
-            {title}
-          </h2>
-          <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+    <main className={`mx-auto max-w-7xl w-full ${title ? "px-4 py-8 sm:px-6 lg:px-8" : "pt-4"}`}>
+      {title && (
+        <div className="mb-6 flex items-end justify-between">
+          <div>
+            <h2 className="text-2xl font-bold sm:text-3xl flex items-center gap-2">
+              {titleIcon}
+              {title}
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+            <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} /> Refresh
+          </Button>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
-          <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} /> Refresh
-        </Button>
-      </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {matches.map((m) =>
