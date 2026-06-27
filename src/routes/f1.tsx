@@ -7,7 +7,7 @@ import type { Match } from "@/lib/sports/types";
 const F1_SOURCES = [
   { label: "Server 1", url: "https://dlhd.pk/stream/stream-60.php" },
   { label: "Server 2", url: "https://f1live.dpdns.org/embed?channelId=23" },
-  { label: "Server 3", url: "https://buffstreams.plus/title-game/formula-1/formula-1-2026-austria-gp-live-streams-links" },
+  { label: "Server 3", url: "https://gooz.aapmains.net/new-stream-embed/52517" },
 ];
 
 const staticMatches: Match[] = [
