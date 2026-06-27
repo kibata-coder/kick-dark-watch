@@ -1,10 +1,17 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw, Tv } from "lucide-react";
+import { useState, useEffect } from "react";
 import type { Match } from "@/lib/sports/types";
+
+export type StreamSource = {
+  label: string;
+  url: string;
+};
 
 export function StreamDialog({
   selected,
   streamUrl,
+  streamSources,
   streamLoading,
   upcomingLabel = "Match not yet started",
   upcomingSub = "Please check back closer to kick-off.",
@@ -13,6 +20,7 @@ export function StreamDialog({
 }: {
   selected: Match | null;
   streamUrl: string | null;
+  streamSources?: StreamSource[];
   streamLoading: boolean;
   upcomingLabel?: string;
   upcomingSub?: string;
@@ -20,7 +28,24 @@ export function StreamDialog({
   onIframeLoad: () => void;
 }) {
   const isUpcoming = selected?.status === "upcoming";
-  
+
+  // When multiple sources are provided, track which one is active
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  // Reset active index whenever a new match is opened
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [selected?.id]);
+
+  const sources: StreamSource[] = streamSources && streamSources.length > 0
+    ? streamSources
+    : streamUrl
+      ? [{ label: "Stream 1", url: streamUrl }]
+      : [];
+
+  const activeUrl = sources[activeIndex]?.url ?? null;
+  const hasMultipleSources = sources.length > 1;
+
   return (
     <Dialog open={!!selected} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-5xl border-border bg-card p-0 overflow-hidden sm:rounded-2xl">
@@ -28,6 +53,26 @@ export function StreamDialog({
           <DialogTitle>
             {selected?.title || `${selected?.home?.name ?? ""}${selected?.away?.name ? ` vs ${selected.away.name}` : ""}`}
           </DialogTitle>
+
+          {/* Server switcher buttons */}
+          {hasMultipleSources && !isUpcoming && (
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              {sources.map((src, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveIndex(i)}
+                  className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                    i === activeIndex
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  }`}
+                >
+                  <Tv className="h-3 w-3" />
+                  {src.label}
+                </button>
+              ))}
+            </div>
+          )}
         </DialogHeader>
         
         <div className="relative aspect-video w-full bg-black">
@@ -41,7 +86,7 @@ export function StreamDialog({
           )}
 
           {/* Missing Stream State */}
-          {!isUpcoming && !streamLoading && !streamUrl && (
+          {!isUpcoming && !streamLoading && sources.length === 0 && (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90 px-4 text-center">
               <AlertCircle className="mb-3 h-8 w-8 text-destructive" />
               <span className="text-lg font-medium text-foreground">Stream unavailable</span>
@@ -57,10 +102,11 @@ export function StreamDialog({
             </div>
           )}
 
-          {/* Clean, Standard Iframe as per API Docs */}
-          {!isUpcoming && streamUrl && (
+          {/* Iframe player */}
+          {!isUpcoming && activeUrl && (
             <iframe
-              src={streamUrl}
+              key={activeUrl}
+              src={activeUrl}
               onLoad={onIframeLoad}
               allow="autoplay; fullscreen; encrypted-media"
               allowFullScreen

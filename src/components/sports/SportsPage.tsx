@@ -15,6 +15,7 @@ import type { Match } from "@/lib/sports/types";
 const StreamDialog = lazy(() =>
   import("./StreamDialog").then((m) => ({ default: m.StreamDialog })),
 );
+import type { StreamSource } from "./StreamDialog";
 
 export type SportsPageProps = {
   category: string;
@@ -25,6 +26,7 @@ export type SportsPageProps = {
   staticMatches: Match[];
   isChannelCard: (m: Match) => boolean;
   staticStreamResolver?: (m: Match) => string | null;
+  staticStreamSources?: (m: Match) => StreamSource[] | null;
   detailFallbackUrl?: string;
   upcomingLabel?: string;
   upcomingSub?: string;
@@ -40,6 +42,7 @@ export function SportsPage(props: SportsPageProps) {
     staticMatches,
     isChannelCard,
     staticStreamResolver,
+    staticStreamSources,
     detailFallbackUrl,
     upcomingLabel,
     upcomingSub,
@@ -57,6 +60,7 @@ export function SportsPage(props: SportsPageProps) {
 
   const [selected, setSelected] = useState<Match | null>(null);
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
+  const [streamSources, setStreamSources] = useState<StreamSource[] | null>(null);
   const [streamLoading, setStreamLoading] = useState(false);
 
   const loadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -71,6 +75,7 @@ export function SportsPage(props: SportsPageProps) {
     async (m: Match) => {
       setSelected(m);
       setStreamUrl(null);
+      setStreamSources(null);
       
       if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
 
@@ -85,6 +90,14 @@ export function SportsPage(props: SportsPageProps) {
       loadingTimeoutRef.current = setTimeout(() => {
         setStreamLoading(false);
       }, 10000);
+
+      // Check for multi-source override first
+      const sources = staticStreamSources?.(m);
+      if (sources && sources.length > 0) {
+        setStreamSources(sources);
+        setStreamUrl(sources[0].url);
+        return;
+      }
 
       const staticUrl = staticStreamResolver?.(m) ?? m.daddyStreamUrl ?? null;
       if (staticUrl) {
@@ -113,7 +126,7 @@ export function SportsPage(props: SportsPageProps) {
         }
       }
     },
-    [qc, category, staticStreamResolver, detailFallbackUrl, fetchDetail],
+    [qc, category, staticStreamResolver, staticStreamSources, detailFallbackUrl, fetchDetail],
   );
 
   const handleClose = useCallback(() => setSelected(null), []);
@@ -152,6 +165,7 @@ export function SportsPage(props: SportsPageProps) {
           <StreamDialog
             selected={selected}
             streamUrl={streamUrl}
+            streamSources={streamSources ?? undefined}
             streamLoading={streamLoading}
             upcomingLabel={upcomingLabel}
             upcomingSub={upcomingSub}

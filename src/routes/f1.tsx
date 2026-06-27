@@ -4,24 +4,25 @@ import { Radio } from "lucide-react";
 import { SportsPage, SportsPageSkeleton } from "@/components/sports/SportsPage";
 import { matchesQueryOptions } from "@/lib/sports/query";
 import type { Match } from "@/lib/sports/types";
-
-
-
-const F1_STREAM_URL = "https://buffstreams.plus/title-game/formula-1/formula-1-2026-austria-gp-live-streams-links";
-
-const staticMatches: Match[] = [
-  { 
-    id: "f1-static", 
-    title: "Formula 1 2026 - Austria GP", 
-    status: "inprogress", 
-    home: { name: "F1 Live Stream", logo: "https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg" }, 
-    away: { name: "Buffstreams Feed", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Sky_Sports_F1_-_Logo_2025.svg/1280px-Sky_Sports_F1_-_Logo_2025.svg.png?_=20260323223722" }, 
-    league: { name: "Motorsport" } 
-  }
+const F1_SOURCES = [
+  { label: "Server 1 (dlhd)",        url: "https://dlhd.pk/stream/stream-60.php" },
+  { label: "Server 2 (StreamEast)",  url: "https://v2.streameast.ga/f1/lenovo-austrian-grand-prix-f1-qual-401839076/" },
+  { label: "Server 3 (Buffstreams)", url: "https://buffstreams.plus/title-game/formula-1/formula-1-2026-austria-gp-live-streams-links" },
 ];
 
-function resolveStaticStream(m: Match): string | null {
-  if (m.id === "f1-static") return F1_STREAM_URL;
+const staticMatches: Match[] = [
+  {
+    id: "f1-static",
+    title: "Formula 1 2026 - Austria GP",
+    status: "inprogress",
+    home: { name: "F1 Live Stream", logo: "https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg" },
+    away: { name: "Sky Sports F1",  logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Sky_Sports_F1_-_Logo_2025.svg/1280px-Sky_Sports_F1_-_Logo_2025.svg.png?_=20260323223722" },
+    league: { name: "Motorsport" },
+  },
+];
+
+function resolveF1Sources(m: Match) {
+  if (m.id === "f1-static") return F1_SOURCES;
   return null;
 }
 
@@ -55,7 +56,7 @@ function RacingPage() {
         defaultLeague="Motorsport"
         staticMatches={staticMatches}
         isChannelCard={() => false}
-        staticStreamResolver={resolveStaticStream}
+        staticStreamSources={resolveF1Sources}
         upcomingLabel="Race not yet started"
         upcomingSub="Please check back closer to lights out."
       />
