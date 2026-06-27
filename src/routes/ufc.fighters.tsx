@@ -1,4 +1,4 @@
-import { useState } from "react";
+
 import { createFileRoute } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,11 @@ import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/ufc/fighters")({
   component: FightersPage,
+  validateSearch: (search: Record<string, unknown>): { fighter?: string } => {
+    return {
+      fighter: typeof search.fighter === "string" ? search.fighter : undefined,
+    };
+  },
 });
 
 type FighterData = {
@@ -242,12 +247,13 @@ function FighterProfile({ fighter, onBack }: { fighter: FighterData; onBack: () 
 }
 
 function FightersPage() {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { fighter: selectedId } = Route.useSearch();
+  const navigate = Route.useNavigate();
   
   const selectedFighter = selectedId ? topFighters.find(f => f.id === selectedId) : null;
 
   if (selectedFighter) {
-    return <FighterProfile fighter={selectedFighter} onBack={() => setSelectedId(null)} />;
+    return <FighterProfile fighter={selectedFighter} onBack={() => navigate({ search: { fighter: undefined } })} />;
   }
 
   return (
@@ -262,7 +268,7 @@ function FightersPage() {
           <Card 
             key={fighter.id} 
             className="group cursor-pointer overflow-hidden bg-card/40 backdrop-blur hover:bg-card/80 transition-all duration-300 border-primary/10 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5"
-            onClick={() => setSelectedId(fighter.id)}
+            onClick={() => navigate({ search: { fighter: fighter.id } })}
           >
             <div className="aspect-[4/3] w-full relative overflow-hidden bg-zinc-900/50">
               <img
