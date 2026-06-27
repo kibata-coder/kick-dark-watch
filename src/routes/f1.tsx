@@ -7,6 +7,24 @@ import type { Match } from "@/lib/sports/types";
 
 
 
+const F1_STREAM_URL = "https://gooz.aapmains.net/new-stream-embed/52517";
+
+const staticMatches: Match[] = [
+  { 
+    id: "f1-static", 
+    title: "Formula 1 2026 - Austria GP", 
+    status: "inprogress", 
+    home: { name: "F1 Live Stream", logo: "https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg" }, 
+    away: { name: "Buffstreams Feed", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Sky_Sports_F1_-_Logo_2025.svg/1280px-Sky_Sports_F1_-_Logo_2025.svg.png?_=20260323223722" }, 
+    league: { name: "Motorsport" } 
+  }
+];
+
+function resolveStaticStream(m: Match): string | null {
+  if (m.id === "f1-static") return F1_STREAM_URL;
+  return null;
+}
+
 export const Route = createFileRoute("/f1")({
   head: () => ({
     meta: [
@@ -17,6 +35,7 @@ export const Route = createFileRoute("/f1")({
     ],
     links: [
       { rel: "preconnect", href: "https://api.sportsrc.org" },
+      { rel: "preconnect", href: "https://gooz.aapmains.net" },
     ],
   }),
   loader: ({ context }) => {
@@ -34,7 +53,9 @@ function RacingPage() {
         subtitle="F1, Le Mans Endurance, MotoGP, and more"
         titleIcon={<Radio className="h-6 w-6 text-primary" />}
         defaultLeague="Motorsport"
+        staticMatches={staticMatches}
         isChannelCard={() => false}
+        staticStreamResolver={resolveStaticStream}
         upcomingLabel="Race not yet started"
         upcomingSub="Please check back closer to lights out."
       />
