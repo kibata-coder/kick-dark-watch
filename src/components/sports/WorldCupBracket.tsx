@@ -1,257 +1,167 @@
-import { useState, useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { Maximize, ZoomIn, ZoomOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 type Team = {
   name: string;
-  code: string;
   flag: string;
-  score?: number | null;
-  isWinner?: boolean;
 };
 
-type MatchNode = {
-  id: string;
-  round: string;
-  team1: Team;
-  team2: Team;
-  date?: string;
-};
-
-// Generate dummy data for a symmetrical 32-team bracket
-const MOCK_TEAMS = [
-  { name: "Argentina", code: "ARG", flag: "https://a.espncdn.com/i/teamlogos/soccer/500/202.png" },
-  { name: "Brazil", code: "BRA", flag: "https://a.espncdn.com/i/teamlogos/soccer/500/205.png" },
-  { name: "France", code: "FRA", flag: "https://a.espncdn.com/i/teamlogos/soccer/500/478.png" },
-  { name: "England", code: "ENG", flag: "https://a.espncdn.com/i/teamlogos/soccer/500/468.png" },
-  { name: "Spain", code: "ESP", flag: "https://a.espncdn.com/i/teamlogos/soccer/500/164.png" },
-  { name: "Germany", code: "GER", flag: "https://a.espncdn.com/i/teamlogos/soccer/500/481.png" },
-  { name: "Portugal", code: "POR", flag: "https://a.espncdn.com/i/teamlogos/soccer/500/482.png" },
-  { name: "Netherlands", code: "NED", flag: "https://a.espncdn.com/i/teamlogos/soccer/500/449.png" },
-  { name: "Italy", code: "ITA", flag: "https://a.espncdn.com/i/teamlogos/soccer/500/104.png" },
-  { name: "Uruguay", code: "URU", flag: "https://a.espncdn.com/i/teamlogos/soccer/500/214.png" },
-  { name: "Croatia", code: "CRO", flag: "https://a.espncdn.com/i/teamlogos/soccer/500/477.png" },
-  { name: "Morocco", code: "MAR", flag: "https://a.espncdn.com/i/teamlogos/soccer/500/644.png" },
-  { name: "USA", code: "USA", flag: "https://a.espncdn.com/i/teamlogos/soccer/500/660.png" },
-  { name: "Mexico", code: "MEX", flag: "https://a.espncdn.com/i/teamlogos/soccer/500/203.png" },
-  { name: "Japan", code: "JPN", flag: "https://a.espncdn.com/i/teamlogos/soccer/500/624.png" },
-  { name: "Senegal", code: "SEN", flag: "https://a.espncdn.com/i/teamlogos/soccer/500/650.png" }
+// Based on the user's reference image
+const LEFT_TEAMS: Team[] = [
+  { name: "Germany", flag: "https://flagcdn.com/w40/de.png" },
+  { name: "Paraguay", flag: "https://flagcdn.com/w40/py.png" },
+  { name: "France", flag: "https://flagcdn.com/w40/fr.png" },
+  { name: "Sweden", flag: "https://flagcdn.com/w40/se.png" },
+  { name: "South Africa", flag: "https://flagcdn.com/w40/za.png" },
+  { name: "Canada", flag: "https://flagcdn.com/w40/ca.png" },
+  { name: "Netherlands", flag: "https://flagcdn.com/w40/nl.png" },
+  { name: "Morocco", flag: "https://flagcdn.com/w40/ma.png" },
+  { name: "Portugal", flag: "https://flagcdn.com/w40/pt.png" },
+  { name: "Croatia", flag: "https://flagcdn.com/w40/hr.png" },
+  { name: "Spain", flag: "https://flagcdn.com/w40/es.png" },
+  { name: "Austria", flag: "https://flagcdn.com/w40/at.png" },
+  { name: "USA", flag: "https://flagcdn.com/w40/us.png" },
+  { name: "Bosnia & H..", flag: "https://flagcdn.com/w40/ba.png" },
+  { name: "Belgium", flag: "https://flagcdn.com/w40/be.png" },
+  { name: "Senegal", flag: "https://flagcdn.com/w40/sn.png" },
 ];
 
-const getTbdTeam = (): Team => ({ name: "TBD", code: "TBD", flag: "" });
+const RIGHT_TEAMS: Team[] = [
+  { name: "Brazil", flag: "https://flagcdn.com/w40/br.png" },
+  { name: "Japan", flag: "https://flagcdn.com/w40/jp.png" },
+  { name: "Ivory Coast", flag: "https://flagcdn.com/w40/ci.png" },
+  { name: "Norway", flag: "https://flagcdn.com/w40/no.png" },
+  { name: "Mexico", flag: "https://flagcdn.com/w40/mx.png" },
+  { name: "Ecuador", flag: "https://flagcdn.com/w40/ec.png" },
+  { name: "England", flag: "https://flagcdn.com/w40/gb-eng.png" },
+  { name: "DR Congo", flag: "https://flagcdn.com/w40/cd.png" },
+  { name: "Argentina", flag: "https://flagcdn.com/w40/ar.png" },
+  { name: "Cape Verde", flag: "https://flagcdn.com/w40/cv.png" },
+  { name: "Australia", flag: "https://flagcdn.com/w40/au.png" },
+  { name: "Egypt", flag: "https://flagcdn.com/w40/eg.png" },
+  { name: "Switzerland", flag: "https://flagcdn.com/w40/ch.png" },
+  { name: "Algeria", flag: "https://flagcdn.com/w40/dz.png" },
+  { name: "Colombia", flag: "https://flagcdn.com/w40/co.png" },
+  { name: "Ghana", flag: "https://flagcdn.com/w40/gh.png" },
+];
 
-// Left Side
-const leftR32: MatchNode[] = Array.from({ length: 8 }).map((_, i) => ({
-  id: `L_R32_${i}`,
-  round: "Round of 32",
-  team1: MOCK_TEAMS[i] || getTbdTeam(),
-  team2: getTbdTeam(),
-}));
-const leftR16: MatchNode[] = Array.from({ length: 4 }).map((_, i) => ({
-  id: `L_R16_${i}`, round: "Round of 16", team1: getTbdTeam(), team2: getTbdTeam()
-}));
-const leftQF: MatchNode[] = Array.from({ length: 2 }).map((_, i) => ({
-  id: `L_QF_${i}`, round: "Quarter-Final", team1: getTbdTeam(), team2: getTbdTeam()
-}));
-const leftSF: MatchNode[] = [{
-  id: `L_SF_0`, round: "Semi-Final", team1: getTbdTeam(), team2: getTbdTeam()
-}];
-
-// Right Side
-const rightR32: MatchNode[] = Array.from({ length: 8 }).map((_, i) => ({
-  id: `R_R32_${i}`,
-  round: "Round of 32",
-  team1: MOCK_TEAMS[8 + i] || getTbdTeam(),
-  team2: getTbdTeam(),
-}));
-const rightR16: MatchNode[] = Array.from({ length: 4 }).map((_, i) => ({
-  id: `R_R16_${i}`, round: "Round of 16", team1: getTbdTeam(), team2: getTbdTeam()
-}));
-const rightQF: MatchNode[] = Array.from({ length: 2 }).map((_, i) => ({
-  id: `R_QF_${i}`, round: "Quarter-Final", team1: getTbdTeam(), team2: getTbdTeam()
-}));
-const rightSF: MatchNode[] = [{
-  id: `R_SF_0`, round: "Semi-Final", team1: getTbdTeam(), team2: getTbdTeam()
-}];
-
-// Final
-const finalMatch: MatchNode = {
-  id: `FINAL`, round: "Final", team1: getTbdTeam(), team2: getTbdTeam()
-};
-
-function MatchCard({ match }: { match: MatchNode }) {
-  return (
-    <Card className="w-48 bg-card border border-border overflow-hidden text-sm flex flex-col shrink-0 shadow-sm relative z-10 hover:border-primary/50 transition-colors cursor-pointer">
-      <div className="bg-muted/50 px-2 py-1 text-[10px] font-bold text-center border-b border-border text-muted-foreground uppercase tracking-wider">
-        {match.round}
-      </div>
-      <div className="flex flex-col">
-        <TeamRow team={match.team1} />
-        <div className="h-px w-full bg-border" />
-        <TeamRow team={match.team2} />
-      </div>
-    </Card>
+// Helper to chunk array into pairs
+const chunk = (arr: Team[], size: number) =>
+  Array.from({ length: Math.ceil(arr.length / size) }, (v, i) =>
+    arr.slice(i * size, i * size + size)
   );
-}
 
-function TeamRow({ team }: { team: Team }) {
-  return (
-    <div className={`flex items-center justify-between px-2 py-1.5 ${team.isWinner ? "bg-primary/5" : ""}`}>
-      <div className="flex items-center gap-2">
-        {team.flag ? (
-          <img src={team.flag} alt={team.code} className="w-4 h-3 object-cover rounded-sm" />
-        ) : (
-          <div className="w-4 h-3 bg-muted rounded-sm" />
-        )}
-        <span className={`font-medium ${team.name === "TBD" ? "text-muted-foreground" : "text-foreground"}`}>
-          {team.code}
-        </span>
-      </div>
-      <span className="font-bold text-xs">{team.score ?? "-"}</span>
-    </div>
-  );
-}
-
-function Column({ matches, justify }: { matches: MatchNode[], justify: "start" | "center" | "end" | "space-around" }) {
-  return (
-    <div className={`flex flex-col gap-4 justify-${justify} h-full py-4`}>
-      {matches.map(m => (
-        <MatchCard key={m.id} match={m} />
-      ))}
-    </div>
-  );
-}
-
-// Connectors for SVG drawing
-function Connector({ type }: { type: "right" | "left" | "straight" }) {
-  // We use CSS borders to draw the bracket lines instead of complex SVGs for a fluid, responsive layout.
-  return null;
-}
+const leftPairs = chunk(LEFT_TEAMS, 2);
+const rightPairs = chunk(RIGHT_TEAMS, 2);
 
 export function WorldCupBracket() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [startY, setStartY] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
-  const [scrollTop, setScrollTop] = useState(0);
-
-  // Center scroll on load
-  useEffect(() => {
-    if (containerRef.current) {
-      const container = containerRef.current;
-      container.scrollLeft = (container.scrollWidth - container.clientWidth) / 2;
-      container.scrollTop = (container.scrollHeight - container.clientHeight) / 2;
-    }
-  }, []);
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (!containerRef.current) return;
-    setIsDragging(true);
-    setStartX(e.pageX - containerRef.current.offsetLeft);
-    setStartY(e.pageY - containerRef.current.offsetTop);
-    setScrollLeft(containerRef.current.scrollLeft);
-    setScrollTop(containerRef.current.scrollTop);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !containerRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - containerRef.current.offsetLeft;
-    const y = e.pageY - containerRef.current.offsetTop;
-    const walkX = (x - startX) * 1.5;
-    const walkY = (y - startY) * 1.5;
-    containerRef.current.scrollLeft = scrollLeft - walkX;
-    containerRef.current.scrollTop = scrollTop - walkY;
-  };
-
-  const handleMouseUp = () => setIsDragging(false);
-  
-  const zoomIn = () => setScale(prev => Math.min(prev + 0.1, 1.5));
-  const zoomOut = () => setScale(prev => Math.max(prev - 0.1, 0.5));
-  const resetZoom = () => {
-    setScale(1);
-    if (containerRef.current) {
-      const container = containerRef.current;
-      container.scrollLeft = (container.scrollWidth - container.clientWidth) / 2;
-      container.scrollTop = (container.scrollHeight - container.clientHeight) / 2;
-    }
-  };
-
   return (
-    <div className="relative w-full border border-border rounded-xl bg-muted/10 overflow-hidden flex flex-col h-[700px]">
+    <div className="relative w-full max-w-4xl mx-auto border border-border rounded-xl overflow-hidden bg-[#0a2e15] text-white">
+      {/* Background texture simulation (dark green grass vibe) */}
+      <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at center, #115e2a 0%, #05180a 100%)' }} />
       
-      {/* Controls */}
-      <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-card border border-border rounded-lg p-1 shadow-md">
-        <Button variant="ghost" size="icon" className="w-8 h-8" onClick={zoomIn}>
-          <ZoomIn className="w-4 h-4" />
-        </Button>
-        <div className="h-px bg-border w-full" />
-        <Button variant="ghost" size="icon" className="w-8 h-8" onClick={resetZoom}>
-          <Maximize className="w-4 h-4" />
-        </Button>
-        <div className="h-px bg-border w-full" />
-        <Button variant="ghost" size="icon" className="w-8 h-8" onClick={zoomOut}>
-          <ZoomOut className="w-4 h-4" />
-        </Button>
-      </div>
-
-      {/* Interactive Panning Area */}
-      <div 
-        ref={containerRef}
-        className={`flex-1 overflow-auto w-full h-full ${isDragging ? "cursor-grabbing" : "cursor-grab"} scrollbar-hide select-none`}
-        onMouseDown={handleMouseDown}
-        onMouseLeave={handleMouseUp}
-        onMouseUp={handleMouseUp}
-        onMouseMove={handleMouseMove}
-      >
-        <div 
-          className="min-w-max min-h-max p-12 flex justify-center items-center transition-transform duration-200 origin-center"
-          style={{ transform: `scale(${scale})` }}
-        >
-          {/* Symmetrical Bracket Layout */}
-          <div className="flex gap-8 items-stretch h-[1200px]">
-            
-            {/* LEFT SIDE */}
-            <Column matches={leftR32} justify="space-around" />
-            <div className="w-8" /> {/* Spacer for visual connectors */}
-            <Column matches={leftR16} justify="space-around" />
-            <div className="w-8" />
-            <Column matches={leftQF} justify="space-around" />
-            <div className="w-8" />
-            <Column matches={leftSF} justify="space-around" />
-            
-            {/* CENTER FINAL */}
-            <div className="flex items-center justify-center px-8 relative">
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl -z-10" />
-              <div className="flex flex-col items-center gap-4">
-                <div className="text-2xl font-black text-primary tracking-widest uppercase drop-shadow-md">
-                  WORLD CHAMPION
-                </div>
-                <MatchCard match={finalMatch} />
-                <div className="mt-4 px-4 py-1.5 bg-primary/20 text-primary rounded-full text-xs font-bold border border-primary/30">
-                  JULY 19, 2026 - NEW YORK
-                </div>
+      <div className="relative z-10 flex justify-between p-4 sm:p-8 min-h-[800px] overflow-x-auto">
+        
+        {/* LEFT COLUMN - ROUND OF 32 */}
+        <div className="flex flex-col justify-between w-24 sm:w-32 shrink-0">
+          {leftPairs.map((pair, idx) => (
+            <div key={idx} className="relative flex flex-col h-20 justify-center">
+              {/* The connecting bracket `]` */}
+              <div className="absolute right-[-16px] top-1/4 bottom-1/4 w-4 border-r-2 border-t-2 border-b-2 border-white/80 rounded-r-sm" />
+              
+              <div className="flex flex-col gap-2 relative z-10 bg-[#0a2e15]">
+                {pair.map((team, i) => (
+                  <div key={i} className="flex flex-col gap-0.5">
+                    <span className="text-[10px] sm:text-xs font-medium leading-none drop-shadow-md truncate">{team.name}</span>
+                    <img src={team.flag} alt={team.name} className="w-6 h-4 sm:w-8 sm:h-5 object-cover rounded-[2px] shadow-sm" />
+                  </div>
+                ))}
               </div>
             </div>
+          ))}
+        </div>
 
-            {/* RIGHT SIDE */}
-            <Column matches={rightSF} justify="space-around" />
-            <div className="w-8" />
-            <Column matches={rightQF} justify="space-around" />
-            <div className="w-8" />
-            <Column matches={rightR16} justify="space-around" />
-            <div className="w-8" />
-            <Column matches={rightR32} justify="space-around" />
+        {/* LEFT COLUMN - ROUND OF 16 CONNECTIONS */}
+        <div className="flex flex-col justify-around w-8 shrink-0 relative">
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <div key={idx} className="relative h-40 w-full">
+              <div className="absolute left-0 top-1/4 bottom-1/4 w-full border-r-2 border-t-2 border-b-2 border-white/80 rounded-r-sm" />
+            </div>
+          ))}
+        </div>
 
+        {/* LEFT COLUMN - QUARTER FINALS CONNECTIONS */}
+        <div className="flex flex-col justify-around w-8 shrink-0 relative">
+          {Array.from({ length: 2 }).map((_, idx) => (
+            <div key={idx} className="relative h-[320px] w-full">
+              <div className="absolute left-0 top-1/4 bottom-1/4 w-full border-r-2 border-t-2 border-b-2 border-white/80 rounded-r-sm" />
+            </div>
+          ))}
+        </div>
+
+        {/* CENTER COLUMN */}
+        <div className="flex flex-col items-center justify-center flex-1 shrink-0 px-4 relative z-20">
+          <div className="absolute top-0 flex flex-col items-center pt-4">
+            <div className="bg-white text-black font-black text-xl px-4 py-1 rounded-t-lg">FIFA</div>
+            <h2 className="text-2xl sm:text-4xl font-serif font-bold text-center mt-4 drop-shadow-lg leading-tight">
+              Road to<br />Final
+            </h2>
+          </div>
+          
+          {/* Trophy Placeholder */}
+          <div className="relative w-32 h-64 sm:w-48 sm:h-80 mt-20 flex items-center justify-center">
+            {/* Connection lines from QF to Center */}
+            <div className="absolute left-[-32px] w-8 border-b-2 border-white/80 top-1/2" />
+            <div className="absolute right-[-32px] w-8 border-b-2 border-white/80 top-1/2" />
+            
+            {/* The "?" boxes on sides of trophy */}
+            <div className="absolute left-[-12px] top-1/2 -translate-y-1/2 w-6 h-6 bg-white text-black font-bold flex items-center justify-center rounded-full text-sm border-2 border-black/20 shadow-lg z-10">?</div>
+            <div className="absolute right-[-12px] top-1/2 -translate-y-1/2 w-6 h-6 bg-white text-black font-bold flex items-center justify-center rounded-full text-sm border-2 border-black/20 shadow-lg z-10">?</div>
+            
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/en/thumb/e/e3/2026_FIFA_World_Cup.svg/1200px-2026_FIFA_World_Cup.svg.png" 
+              alt="Trophy" 
+              className="object-contain w-full h-full drop-shadow-2xl opacity-90"
+            />
           </div>
         </div>
-      </div>
-      
-      <div className="absolute bottom-0 left-0 w-full bg-background/80 backdrop-blur-sm border-t border-border p-3 text-center text-xs text-muted-foreground z-20 flex items-center justify-center gap-2">
-        <span>Click and drag to pan around the bracket. Matches will be updated live as the tournament progresses.</span>
+
+        {/* RIGHT COLUMN - QUARTER FINALS CONNECTIONS */}
+        <div className="flex flex-col justify-around w-8 shrink-0 relative">
+          {Array.from({ length: 2 }).map((_, idx) => (
+            <div key={idx} className="relative h-[320px] w-full">
+              <div className="absolute right-0 top-1/4 bottom-1/4 w-full border-l-2 border-t-2 border-b-2 border-white/80 rounded-l-sm" />
+            </div>
+          ))}
+        </div>
+
+        {/* RIGHT COLUMN - ROUND OF 16 CONNECTIONS */}
+        <div className="flex flex-col justify-around w-8 shrink-0 relative">
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <div key={idx} className="relative h-40 w-full">
+              <div className="absolute right-0 top-1/4 bottom-1/4 w-full border-l-2 border-t-2 border-b-2 border-white/80 rounded-l-sm" />
+            </div>
+          ))}
+        </div>
+
+        {/* RIGHT COLUMN - ROUND OF 32 */}
+        <div className="flex flex-col justify-between w-24 sm:w-32 items-end text-right shrink-0">
+          {rightPairs.map((pair, idx) => (
+            <div key={idx} className="relative flex flex-col h-20 justify-center w-full items-end">
+              {/* The connecting bracket `[` */}
+              <div className="absolute left-[-16px] top-1/4 bottom-1/4 w-4 border-l-2 border-t-2 border-b-2 border-white/80 rounded-l-sm" />
+              
+              <div className="flex flex-col gap-2 relative z-10 bg-[#0a2e15] items-end">
+                {pair.map((team, i) => (
+                  <div key={i} className="flex flex-col items-end gap-0.5">
+                    <span className="text-[10px] sm:text-xs font-medium leading-none drop-shadow-md truncate">{team.name}</span>
+                    <img src={team.flag} alt={team.name} className="w-6 h-4 sm:w-8 sm:h-5 object-cover rounded-[2px] shadow-sm" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
       </div>
     </div>
   );
