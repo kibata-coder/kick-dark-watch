@@ -30,7 +30,19 @@ export type SportsPageProps = {
   detailFallbackUrl?: string;
   upcomingLabel?: string;
   upcomingSub?: string;
+  groupByLeague?: boolean;
 };
+
+function getLeagueName(m: Match, defaultLeague: string): string {
+  const league: any = m.league;
+  const name =
+    typeof league === "object" && league !== null
+      ? league.name || defaultLeague
+      : typeof league === "string"
+      ? league
+      : defaultLeague;
+  return name.trim() || defaultLeague;
+}
 
 export function SportsPage(props: SportsPageProps) {
   const {
@@ -46,6 +58,7 @@ export function SportsPage(props: SportsPageProps) {
     detailFallbackUrl,
     upcomingLabel,
     upcomingSub,
+    groupByLeague,
   } = props;
 
   const qc = useQueryClient();
@@ -57,6 +70,24 @@ export function SportsPage(props: SportsPageProps) {
     () => [...staticMatches, ...normalizeMatches(data)],
     [data, staticMatches],
   );
+
+  const groupedMatches = useMemo(() => {
+    if (!groupByLeague) return null;
+    const groups: Record<string, Match[]> = {};
+    matches.forEach((m) => {
+      const lg = getLeagueName(m, defaultLeague);
+      if (!groups[lg]) groups[lg] = [];
+      groups[lg].push(m);
+    });
+
+    const sortedKeys = Object.keys(groups).sort((a, b) => {
+      if (a === "LIVE CHANNEL") return -1;
+      if (b === "LIVE CHANNEL") return 1;
+      return a.localeCompare(b);
+    });
+
+    return sortedKeys.map((key) => ({ league: key, matches: groups[key] }));
+  }, [matches, groupByLeague, defaultLeague]);
 
   const [selected, setSelected] = useState<Match | null>(null);
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
@@ -152,15 +183,36 @@ export function SportsPage(props: SportsPageProps) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {matches.map((m) =>
-          isChannelCard(m) ? (
-            <ChannelCard key={String(m.id)} match={m} onWatch={handleWatch} />
-          ) : (
-            <MatchCard key={String(m.id)} match={m} defaultLeague={defaultLeague} onWatch={handleWatch} isPortrait={category === "mma"} />
-          ),
-        )}
-      </div>
+      {groupedMatches ? (
+        <div className="flex flex-col gap-8">
+          {groupedMatches.map(({ league, matches: leagueMatches }) => (
+            <div key={league} className="flex flex-col gap-4">
+              <h3 className="text-xl font-bold tracking-tight border-b border-border pb-2">
+                {league}
+              </h3>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {leagueMatches.map((m) =>
+                  isChannelCard(m) ? (
+                    <ChannelCard key={String(m.id)} match={m} onWatch={handleWatch} />
+                  ) : (
+                    <MatchCard key={String(m.id)} match={m} defaultLeague={defaultLeague} onWatch={handleWatch} isPortrait={category === "mma"} />
+                  ),
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {matches.map((m) =>
+            isChannelCard(m) ? (
+              <ChannelCard key={String(m.id)} match={m} onWatch={handleWatch} />
+            ) : (
+              <MatchCard key={String(m.id)} match={m} defaultLeague={defaultLeague} onWatch={handleWatch} isPortrait={category === "mma"} />
+            ),
+          )}
+        </div>
+      )}
 
       {selected && (
         <Suspense fallback={null}>

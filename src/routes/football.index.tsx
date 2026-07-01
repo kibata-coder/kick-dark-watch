@@ -73,6 +73,7 @@ function FootballLiveMatches() {
               : "";
           return leagueName === "LIVE CHANNEL";
         }}
+        groupByLeague={true}
       />
     </Suspense>
   );
