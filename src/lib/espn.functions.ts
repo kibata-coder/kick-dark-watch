@@ -54,7 +54,13 @@ export const getEspnScoreboard = createServerFn({ method: "GET" })
       return cached.data;
     }
 
-    const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard`;
+    let url = `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard`;
+    if (slug === "fifa.world") {
+      // The World Cup Knockout stage runs from June 28 to July 19.
+      // Fetch the entire range so the full 32-team bracket is populated, not just today's matches.
+      url += `?dates=20260628-20260719`;
+    }
+    
     const res = await fetch(url);
     if (!res.ok) throw new Error(`ESPN Scoreboard API failed: ${res.status}`);
     
