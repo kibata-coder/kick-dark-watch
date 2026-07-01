@@ -44,7 +44,7 @@ export const Route = createFileRoute("/football/")({
       { property: "og:description", content: "Watch live football matches and 24/7 sports channels." },
     ],
     links: [
-      { rel: "preconnect", href: "https://api.sportsrc.org" },
+      { rel: "preconnect", href: "https://www.thesportsdb.com" },
       { rel: "preconnect", href: "https://dlhd.pk" },
     ],
   }),

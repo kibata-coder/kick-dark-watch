@@ -34,7 +34,7 @@ export const Route = createFileRoute("/basketball")({
       { property: "og:description", content: "Stream live NBA and global basketball matchups." },
     ],
     links: [
-      { rel: "preconnect", href: "https://api.sportsrc.org" },
+      { rel: "preconnect", href: "https://www.thesportsdb.com" },
       { rel: "preconnect", href: "https://dlhd.pk" },
     ],
   }),

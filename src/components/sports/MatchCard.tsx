@@ -18,6 +18,7 @@ function MatchCardImpl({
   isPortrait?: boolean;
 }) {
   const handleClick = useCallback(() => onWatch(match), [match, onWatch]);
+  
   return (
     <Card className="bg-card/80 backdrop-blur hover:border-primary/40 transition-all flex flex-col">
       <CardHeader className="flex flex-row items-center justify-between pb-3">

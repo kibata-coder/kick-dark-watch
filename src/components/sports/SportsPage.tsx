@@ -203,9 +203,22 @@ export function SportsPage(props: SportsPageProps) {
       
       try {
         const detail = await qc.fetchQuery(matchDetailQueryOptions(String(m.id), category));
-        const url = extractStreamUrl(detail);
-        if (url) {
-          setStreamUrl(url);
+        const sportSrcUrl = extractStreamUrl(detail);
+        
+        const hSlug = m.home?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || "";
+        const aSlug = m.away?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || "";
+        const zetaUrl = hSlug && aSlug ? `https://zetastream.dpdns.org/watch/sports/1?id=${hSlug}-vs-${aSlug}` : null;
+
+        if (sportSrcUrl && zetaUrl) {
+          setStreamSources([
+            { label: "Server 1 (SportSRC)", url: sportSrcUrl },
+            { label: "Server 2 (ZetaStream)", url: zetaUrl }
+          ]);
+          setStreamUrl(sportSrcUrl);
+        } else if (sportSrcUrl) {
+          setStreamUrl(sportSrcUrl);
+        } else if (zetaUrl) {
+          setStreamUrl(zetaUrl);
         } else if (detailFallbackUrl) {
           setStreamUrl(detailFallbackUrl);
         } else {
@@ -214,7 +227,13 @@ export function SportsPage(props: SportsPageProps) {
         }
       } catch (e) {
         console.error(e);
-        if (detailFallbackUrl) {
+        const hSlug = m.home?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || "";
+        const aSlug = m.away?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || "";
+        const zetaUrl = hSlug && aSlug ? `https://zetastream.dpdns.org/watch/sports/1?id=${hSlug}-vs-${aSlug}` : null;
+        
+        if (zetaUrl) {
+          setStreamUrl(zetaUrl);
+        } else if (detailFallbackUrl) {
           setStreamUrl(detailFallbackUrl);
         } else {
           if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);

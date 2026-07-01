@@ -35,7 +35,7 @@ export const Route = createFileRoute("/f1")({
       { property: "og:description", content: "Watch Formula 1, Le Mans, MotoGP and more, live." },
     ],
     links: [
-      { rel: "preconnect", href: "https://api.sportsrc.org" },
+      { rel: "preconnect", href: "https://www.thesportsdb.com" },
       { rel: "preconnect", href: "https://buffstreams.plus" },
     ],
   }),

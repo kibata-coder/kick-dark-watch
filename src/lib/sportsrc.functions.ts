@@ -1,77 +1,40 @@
 import { createServerFn } from "@tanstack/react-start";
-import { callSportsrc } from "./sportsrc.server";
 
-const listCache = new Map<string, { timestamp: number; data: any }>();
-const detailCache = new Map<string, { timestamp: number; data: any }>();
-const CACHE_TTL = 5 * 60 * 1000;
+const API_BASE = "https://api.sportsrc.org/v2/";
+
+async function callSportsrc(qs: string): Promise<any> {
+  const apiKey = process.env.VITE_SPORTSRC_API_KEY;
+  if (!apiKey) throw new Error("VITE_SPORTSRC_API_KEY is not configured in environment variables");
+  
+  const res = await fetch(`${API_BASE}?${qs}`, {
+    headers: { "X-API-KEY": apiKey },
+  });
+  
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("SportSRC API Error:", text);
+    throw new Error(`SportSRC request failed (${res.status})`);
+  }
+  return res.json();
+}
 
 export const getMatches = createServerFn({ method: "GET" })
-  .inputValidator((data: { category?: string }) => data ?? {})
+  .inputValidator((data: { date: string; status?: string }) => data)
   .handler(async ({ data }) => {
-    const category = data?.category || "football";
-    const cacheKey = category;
-    const cached = listCache.get(cacheKey);
-
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      console.log(`[Cache Hit] Serving ${category} list from server memory`);
-      return cached.data;
+    // We want to fetch all matches for the day, so we don't strict filter by inprogress unless requested
+    // Usually 'all' or empty returns everything. Let's pass 'all' or omit status.
+    const qs = new URLSearchParams();
+    qs.set("type", "matches");
+    qs.set("sport", "football");
+    if (data.status) {
+      qs.set("status", data.status);
     }
-
-    console.log(`[Cache Miss] Fetching fresh ${category} list from API`);
-    const isV2 = category === "football";
-    const freshData = await callSportsrc(
-      isV2 
-        ? `type=matches&sport=${encodeURIComponent(category)}`
-        : `data=matches&category=${encodeURIComponent(category)}`,
-      isV2
-    );
-    
-    listCache.set(cacheKey, { timestamp: Date.now(), data: freshData });
-    return freshData;
+    qs.set("date", data.date);
+    return callSportsrc(qs.toString());
   });
 
 export const getMatchDetail = createServerFn({ method: "GET" })
-  .inputValidator((data: { id: string; category?: string }) => data)
+  .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }) => {
-    const category = data.category || "football";
-    const cacheKey = `${category}_${data.id}`;
-    const cached = detailCache.get(cacheKey);
-
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      console.log(`[Cache Hit] Serving stream link for match ${data.id} from server memory`);
-      return cached.data;
-    }
-
-    console.log(`[Cache Miss] Fetching fresh stream link for match ${data.id} from API`);
-    const isV2 = category === "football";
-    const freshData = await callSportsrc(
-      isV2
-        ? `type=detail&id=${encodeURIComponent(data.id)}`
-        : `data=detail&category=${encodeURIComponent(category)}&id=${encodeURIComponent(data.id)}`,
-      isV2
-    );
-    
-    detailCache.set(cacheKey, { timestamp: Date.now(), data: freshData });
-    return freshData;
-  });
-
-export const getStandings = createServerFn({ method: "GET" })
-  .inputValidator((data: { league: string }) => data)
-  .handler(async ({ data }) => {
-    const league = data.league;
-    const cacheKey = `standings_${league}`;
-    const cached = listCache.get(cacheKey);
-
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      console.log(`[Cache Hit] Serving standings for ${league} from server memory`);
-      return cached.data;
-    }
-
-    console.log(`[Cache Miss] Fetching fresh standings for ${league} from API`);
-    const freshData = await callSportsrc(
-      `type=standing&league_id=${encodeURIComponent(league)}`
-    );
-    
-    listCache.set(cacheKey, { timestamp: Date.now(), data: freshData });
-    return freshData;
+    return callSportsrc(`type=detail&id=${encodeURIComponent(data.id)}`);
   });
