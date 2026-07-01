@@ -89,6 +89,13 @@ export function SportsPage(props: SportsPageProps) {
     return sortedKeys.map((key) => ({ league: key, matches: groups[key] }));
   }, [matches, groupByLeague, defaultLeague]);
 
+  const [selectedLeagueFilter, setSelectedLeagueFilter] = useState<string>("All Matches");
+
+  const leagues = useMemo(() => {
+    if (!groupedMatches) return [];
+    return ["All Matches", ...groupedMatches.map((g) => g.league)];
+  }, [groupedMatches]);
+
   const [selected, setSelected] = useState<Match | null>(null);
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [streamSources, setStreamSources] = useState<StreamSource[] | null>(null);
@@ -184,23 +191,74 @@ export function SportsPage(props: SportsPageProps) {
       )}
 
       {groupedMatches ? (
-        <div className="flex flex-col gap-8">
-          {groupedMatches.map(({ league, matches: leagueMatches }) => (
-            <div key={league} className="flex flex-col gap-4">
-              <h3 className="text-xl font-bold tracking-tight border-b border-border pb-2">
-                {league}
-              </h3>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {leagueMatches.map((m) =>
-                  isChannelCard(m) ? (
-                    <ChannelCard key={String(m.id)} match={m} onWatch={handleWatch} />
-                  ) : (
-                    <MatchCard key={String(m.id)} match={m} defaultLeague={defaultLeague} onWatch={handleWatch} isPortrait={category === "mma"} />
-                  ),
-                )}
-              </div>
+        <div className="flex flex-col md:flex-row gap-6 lg:gap-8">
+          <aside className="w-full md:w-56 lg:w-64 flex-shrink-0">
+            {/* Mobile horizontal tabs */}
+            <div className="md:hidden flex overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 gap-2 scrollbar-hide">
+              {leagues.map((lg) => (
+                <button
+                  key={lg}
+                  onClick={() => setSelectedLeagueFilter(lg)}
+                  className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                    selectedLeagueFilter === lg
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {lg}
+                </button>
+              ))}
             </div>
-          ))}
+            
+            {/* Desktop sidebar */}
+            <div className="hidden md:flex flex-col gap-1 sticky top-24">
+              <h3 className="font-semibold text-lg mb-3 px-3">Leagues</h3>
+              {leagues.map((lg) => (
+                <button
+                  key={lg}
+                  onClick={() => setSelectedLeagueFilter(lg)}
+                  className={`text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    selectedLeagueFilter === lg
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {lg}
+                </button>
+              ))}
+            </div>
+          </aside>
+
+          <div className="flex-1">
+            <div className="flex flex-col gap-8">
+              {groupedMatches
+                .filter((g) => selectedLeagueFilter === "All Matches" || g.league === selectedLeagueFilter)
+                .map(({ league, matches: leagueMatches }) => (
+                  <div key={league} className="flex flex-col gap-4">
+                    {selectedLeagueFilter === "All Matches" && (
+                      <h3 className="text-xl font-bold tracking-tight border-b border-border pb-2">
+                        {league}
+                      </h3>
+                    )}
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+                      {leagueMatches.map((m) =>
+                        isChannelCard(m) ? (
+                          <ChannelCard key={String(m.id)} match={m} onWatch={handleWatch} />
+                        ) : (
+                          <MatchCard
+                            key={String(m.id)}
+                            match={m}
+                            defaultLeague={defaultLeague}
+                            onWatch={handleWatch}
+                            isPortrait={category === "mma"}
+                          />
+                        ),
+                      )}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
