@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { getMatches, getMatchDetail, getStandings } from "@/lib/sportsrc.functions";
 import { getWorldCupStandings } from "@/lib/worldcup.functions";
+import { getEspnStandings, getEspnNews } from "@/lib/espn.functions";
 
 const FIVE_MIN = 5 * 60 * 1000;
 
@@ -35,4 +36,18 @@ export const worldCupStandingsQueryOptions = () =>
     staleTime: FIVE_MIN,
     gcTime: 30 * 60 * 1000,
     refetchOnWindowFocus: false,
+  });
+
+export const espnStandingsQueryOptions = (slug: string) =>
+  queryOptions({
+    queryKey: ["espn", "standings", slug],
+    queryFn: () => getEspnStandings({ data: { slug } }),
+    staleTime: FIVE_MIN,
+  });
+
+export const espnNewsQueryOptions = (slug: string) =>
+  queryOptions({
+    queryKey: ["espn", "news", slug],
+    queryFn: () => getEspnNews({ data: { slug } }),
+    staleTime: FIVE_MIN,
   });
