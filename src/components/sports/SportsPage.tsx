@@ -4,7 +4,7 @@ import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Pin } from "lucide-react";
 import { MatchCard } from "./MatchCard";
 import { ChannelCard } from "./ChannelCard";
 import { matchesQueryOptions, matchDetailQueryOptions } from "@/lib/sports/query";
@@ -80,9 +80,30 @@ export function SportsPage(props: SportsPageProps) {
       groups[lg].push(m);
     });
 
+    const getLeagueRank = (leagueName: string): number => {
+      const lower = leagueName.toLowerCase();
+      if (lower === "live channel") return 0;
+      if (lower.includes("world cup") || lower.includes("worldcup")) return 1;
+      if (lower.includes("premier league") || lower === "epl") return 2;
+      if (lower.includes("la liga") || lower.includes("laliga")) return 3;
+      if (lower.includes("bundesliga")) return 4;
+      if (lower === "serie a" || lower.includes("italy serie a")) return 5;
+      if (lower.includes("ligue 1")) return 6;
+      if (lower.includes("saudi")) return 7;
+      if (lower.includes("brasileirão") || lower.includes("brasileirao") || lower.includes("serie a (brazil)")) return 8;
+      if (lower.includes("mls") || lower.includes("major league soccer")) return 9;
+      if (lower.includes("primeira liga")) return 10;
+      if (lower.includes("eredivisie")) return 11;
+      return 999;
+    };
+
     const sortedKeys = Object.keys(groups).sort((a, b) => {
-      if (a === "LIVE CHANNEL") return -1;
-      if (b === "LIVE CHANNEL") return 1;
+      const rankA = getLeagueRank(a);
+      const rankB = getLeagueRank(b);
+      
+      if (rankA !== rankB) {
+        return rankA - rankB;
+      }
       return a.localeCompare(b);
     });
 
@@ -95,6 +116,18 @@ export function SportsPage(props: SportsPageProps) {
     if (!groupedMatches) return [];
     return ["All Matches", ...groupedMatches.map((g) => g.league)];
   }, [groupedMatches]);
+
+  const isPinned = useCallback((leagueName: string) => {
+    const lower = leagueName.toLowerCase();
+    return (
+      lower.includes("world cup") ||
+      lower.includes("worldcup") ||
+      lower.includes("premier league") ||
+      lower === "epl" ||
+      lower.includes("la liga") ||
+      lower.includes("laliga")
+    );
+  }, []);
 
   const [selected, setSelected] = useState<Match | null>(null);
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
@@ -199,12 +232,13 @@ export function SportsPage(props: SportsPageProps) {
                 <button
                   key={lg}
                   onClick={() => setSelectedLeagueFilter(lg)}
-                  className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-1.5 whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                     selectedLeagueFilter === lg
                       ? "bg-primary text-primary-foreground shadow-sm"
                       : "bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground"
                   }`}
                 >
+                  {isPinned(lg) && <Pin className="w-3.5 h-3.5 text-blue-500 fill-blue-500" />}
                   {lg}
                 </button>
               ))}
@@ -217,12 +251,13 @@ export function SportsPage(props: SportsPageProps) {
                 <button
                   key={lg}
                   onClick={() => setSelectedLeagueFilter(lg)}
-                  className={`text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     selectedLeagueFilter === lg
                       ? "bg-primary text-primary-foreground shadow-sm"
                       : "hover:bg-muted text-muted-foreground hover:text-foreground"
                   }`}
                 >
+                  {isPinned(lg) && <Pin className="w-3.5 h-3.5 text-blue-500 fill-blue-500 flex-shrink-0" />}
                   {lg}
                 </button>
               ))}
