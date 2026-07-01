@@ -81,19 +81,19 @@ export function SportsPage(props: SportsPageProps) {
     });
 
     const getLeagueRank = (leagueName: string): number => {
-      const lower = leagueName.toLowerCase();
+      const lower = leagueName.trim().toLowerCase();
       if (lower === "live channel") return 0;
       if (lower.includes("world cup") || lower.includes("worldcup")) return 1;
-      if (lower.includes("premier league") || lower === "epl") return 2;
-      if (lower.includes("la liga") || lower.includes("laliga")) return 3;
-      if (lower.includes("bundesliga")) return 4;
-      if (lower === "serie a" || lower.includes("italy serie a")) return 5;
-      if (lower.includes("ligue 1")) return 6;
-      if (lower.includes("saudi")) return 7;
-      if (lower.includes("brasileirão") || lower.includes("brasileirao") || lower.includes("serie a (brazil)")) return 8;
-      if (lower.includes("mls") || lower.includes("major league soccer")) return 9;
-      if (lower.includes("primeira liga")) return 10;
-      if (lower.includes("eredivisie")) return 11;
+      if (lower === "premier league" || lower === "english premier league" || lower === "england - premier league" || lower === "epl") return 2;
+      if (lower === "la liga" || lower === "laliga" || lower === "spain - la liga" || lower === "spanish la liga") return 3;
+      if (lower.includes("bundesliga") && !lower.includes("austria") && !lower.includes("women")) return 4;
+      if (lower === "serie a" || lower === "italy - serie a" || lower === "italy serie a") return 5;
+      if (lower === "ligue 1" || lower === "france - ligue 1" || lower === "france ligue 1") return 6;
+      if (lower.includes("saudi pro league") || lower === "saudi arabia - pro league" || lower === "saudi arabian pro league" || lower === "saudi league") return 7;
+      if (lower.includes("brasileirão") || lower.includes("brasileirao") || lower === "serie a (brazil)" || lower === "brazil - serie a") return 8;
+      if (lower === "mls" || lower === "major league soccer" || lower === "usa - mls") return 9;
+      if (lower === "primeira liga" || lower === "portugal - primeira liga") return 10;
+      if (lower === "eredivisie" || lower === "netherlands - eredivisie") return 11;
       return 999;
     };
 
@@ -118,15 +118,11 @@ export function SportsPage(props: SportsPageProps) {
   }, [groupedMatches]);
 
   const isPinned = useCallback((leagueName: string) => {
-    const lower = leagueName.toLowerCase();
-    return (
-      lower.includes("world cup") ||
-      lower.includes("worldcup") ||
-      lower.includes("premier league") ||
-      lower === "epl" ||
-      lower.includes("la liga") ||
-      lower.includes("laliga")
-    );
+    const lower = leagueName.trim().toLowerCase();
+    const isEPL = lower === "premier league" || lower === "english premier league" || lower === "england - premier league" || lower === "epl";
+    const isLaLiga = lower === "la liga" || lower === "laliga" || lower === "spain - la liga" || lower === "spanish la liga";
+    const isWorldCup = lower.includes("world cup") || lower.includes("worldcup");
+    return isWorldCup || isEPL || isLaLiga;
   }, []);
 
   const [selected, setSelected] = useState<Match | null>(null);
