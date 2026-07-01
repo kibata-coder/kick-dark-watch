@@ -1,5 +1,4 @@
 import { Card } from "@/components/ui/card";
-import type { Match } from "@/lib/sports/types";
 
 type Team = {
   name: string;
@@ -10,29 +9,31 @@ type Team = {
 
 type Pair = [Team, Team];
 
-export function WorldCupBracket({ matches = [] }: { matches?: Match[] }) {
+export function WorldCupBracket({ events = [] }: { events?: any[] }) {
   // Try to cleanly extract 16 knockout matches.
   // If we don't have enough, we'll pad with empty placeholders.
-  const knockoutMatches = matches.slice(0, 16);
+  const knockoutMatches = events.slice(0, 16);
   const leftMatches = knockoutMatches.slice(0, 8);
   const rightMatches = knockoutMatches.slice(8, 16);
 
   const formatTeam = (competitor: any): Team => {
-    if (!competitor) return { name: "TBD", flag: "" };
+    if (!competitor || !competitor.team) return { name: "TBD", flag: "" };
     return {
-      name: competitor.name || "TBD",
-      flag: competitor.logo || "",
+      name: competitor.team.shortDisplayName || competitor.team.displayName || "TBD",
+      flag: competitor.team.logo || "",
       score: competitor.score,
       isWinner: competitor.winner,
     };
   };
 
-  const mapToPairs = (matchList: Match[]): Pair[] => {
+  const mapToPairs = (eventList: any[]): Pair[] => {
     const pairs: Pair[] = [];
     for (let i = 0; i < 8; i++) {
-      if (matchList[i]) {
-        const home = matchList[i].homeTeam;
-        const away = matchList[i].awayTeam;
+      if (eventList[i] && eventList[i].competitions && eventList[i].competitions[0]) {
+        const competitors = eventList[i].competitions[0].competitors;
+        // ESPN order usually places home vs away.
+        const home = competitors.find((c: any) => c.homeAway === 'home') || competitors[0];
+        const away = competitors.find((c: any) => c.homeAway === 'away') || competitors[1];
         pairs.push([formatTeam(home), formatTeam(away)]);
       } else {
         pairs.push([{ name: "TBD", flag: "" }, { name: "TBD", flag: "" }]);
@@ -116,9 +117,9 @@ export function WorldCupBracket({ matches = [] }: { matches?: Match[] }) {
             <div className="absolute right-[-12px] top-1/2 -translate-y-1/2 w-6 h-6 bg-white text-black font-bold flex items-center justify-center rounded-full text-sm border-2 border-black/20 shadow-lg z-10">?</div>
             
             <img 
-              src="https://upload.wikimedia.org/wikipedia/en/thumb/e/e3/2026_FIFA_World_Cup.svg/1200px-2026_FIFA_World_Cup.svg.png" 
+              src="https://a.espncdn.com/i/leaguelogos/soccer/500/4.png" 
               alt="Trophy" 
-              className="object-contain w-full h-full drop-shadow-2xl opacity-90"
+              className="object-contain w-full h-full drop-shadow-2xl opacity-90 filter brightness-150 contrast-125"
             />
           </div>
         </div>

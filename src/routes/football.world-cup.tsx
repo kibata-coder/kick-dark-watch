@@ -6,11 +6,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Trophy, RefreshCw, GitMerge } from "lucide-react";
-import { worldCupStandingsQueryOptions, matchesQueryOptions } from "@/lib/sports/query";
+import { worldCupStandingsQueryOptions, espnScoreboardQueryOptions } from "@/lib/sports/query";
 import type { WorldCupStandingRow, Match } from "@/lib/sports/types";
 import { MatchCard } from "@/components/sports/MatchCard";
 import { WorldCupBracket } from "@/components/sports/WorldCupBracket";
-import { normalizeMatches } from "@/lib/sports/utils";
 
 export const Route = createFileRoute("/football/world-cup")({
   head: () => ({
@@ -32,7 +31,7 @@ export const Route = createFileRoute("/football/world-cup")({
   loader: ({ context }) =>
     Promise.all([
       context.queryClient.ensureQueryData(worldCupStandingsQueryOptions()),
-      context.queryClient.ensureQueryData(matchesQueryOptions("football"))
+      context.queryClient.ensureQueryData(espnScoreboardQueryOptions("fifa.world"))
     ]),
   component: WorldCupPage,
   pendingComponent: WorldCupSkeleton,
@@ -44,17 +43,14 @@ export const Route = createFileRoute("/football/world-cup")({
 
 function WorldCupPage() {
   const { data: groups } = useSuspenseQuery(worldCupStandingsQueryOptions());
-  const { data: allMatchesData } = useSuspenseQuery(matchesQueryOptions("football"));
+  const { data: espnScoreboard } = useSuspenseQuery(espnScoreboardQueryOptions("fifa.world"));
   const [activeTab, setActiveTab] = useState<"groups" | "knockout">("groups");
 
-  const worldCupMatches = useMemo(() => {
-    const allMatches = normalizeMatches(allMatchesData);
-    return allMatches.filter((m) => {
-      const league: any = m.league;
-      const lgName = (typeof league === "object" && league !== null ? league.name : typeof league === "string" ? league : "").toLowerCase();
-      return lgName.includes("world championship") || lgName.includes("world cup") || lgName.includes("worldcup");
-    });
-  }, [allMatchesData]);
+  const knockoutMatches = useMemo(() => {
+    // ESPN scoreboard returns an array of events
+    if (!espnScoreboard || !espnScoreboard.events) return [];
+    return espnScoreboard.events;
+  }, [espnScoreboard]);
 
   // Dummy watch handler since detailed stream resolution is handled on the main page. 
   // Clicking the card can route to the main page or just show it if we add the StreamDialog here.
@@ -124,7 +120,7 @@ function WorldCupPage() {
             </p>
           </div>
           
-          <WorldCupBracket matches={worldCupMatches} />
+          <WorldCupBracket events={knockoutMatches} />
         </div>
       )}
 

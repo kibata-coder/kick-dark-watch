@@ -42,3 +42,23 @@ export const getEspnNews = createServerFn({ method: "GET" })
     cache.set(cacheKey, { timestamp: Date.now(), data: freshData });
     return freshData;
   });
+
+export const getEspnScoreboard = createServerFn({ method: "GET" })
+  .inputValidator((data: { slug?: string } | undefined) => data || {})
+  .handler(async ({ data }) => {
+    const slug = data.slug || "fifa.world";
+    const cacheKey = `espn_scoreboard_${slug}`;
+    const cached = cache.get(cacheKey);
+
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return cached.data;
+    }
+
+    const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`ESPN Scoreboard API failed: ${res.status}`);
+    
+    const freshData = await res.json();
+    cache.set(cacheKey, { timestamp: Date.now(), data: freshData });
+    return freshData;
+  });
