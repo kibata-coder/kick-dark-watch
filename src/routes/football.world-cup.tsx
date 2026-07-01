@@ -1,12 +1,14 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Trophy, RefreshCw } from "lucide-react";
+import { Trophy, RefreshCw, GitMerge } from "lucide-react";
 import { worldCupStandingsQueryOptions } from "@/lib/sports/query";
 import type { WorldCupStandingRow } from "@/lib/sports/types";
+import { WorldCupBracket } from "@/components/sports/WorldCupBracket";
 
 export const Route = createFileRoute("/football/world-cup")({
   head: () => ({
@@ -37,33 +39,70 @@ export const Route = createFileRoute("/football/world-cup")({
 
 function WorldCupPage() {
   const { data: groups } = useSuspenseQuery(worldCupStandingsQueryOptions());
-
-  if (!groups || groups.length === 0) {
-    return (
-      <div className="py-12 text-center text-sm text-muted-foreground">
-        Standings will appear once the tournament data is published.
-      </div>
-    );
-  }
+  const [activeTab, setActiveTab] = useState<"groups" | "knockout">("groups");
 
   return (
-    <section className="py-6">
-      <div className="mb-6 flex items-end justify-between gap-4">
-        <div>
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Trophy className="h-4 w-4 text-primary" /> Group Stage Standings
-          </h3>
-          <p className="text-xs text-muted-foreground mt-1">
-            Live points table for all 12 groups (A–L). Top 2 advance automatically; 3rd-placed teams compete for the Round of 32.
-          </p>
-        </div>
+    <section className="py-6 flex flex-col gap-6">
+      
+      {/* Local Tabs for World Cup Page */}
+      <div className="flex bg-muted/50 p-1 rounded-lg w-fit border border-border">
+        <button
+          onClick={() => setActiveTab("groups")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            activeTab === "groups" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Trophy className="w-4 h-4" /> Group Stage
+        </button>
+        <button
+          onClick={() => setActiveTab("knockout")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            activeTab === "knockout" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <GitMerge className="w-4 h-4" /> Knockout Stage
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {groups.map((group) => (
-          <GroupCard key={group.name} name={group.name} rows={group.rows} />
-        ))}
-      </div>
+      {activeTab === "groups" && (
+        <div className="flex flex-col gap-4">
+          <div className="mb-2">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              Group Stage Standings
+            </h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              Live points table for all 12 groups (A–L). Top 2 advance automatically; 3rd-placed teams compete for the Round of 32.
+            </p>
+          </div>
+
+          {!groups || groups.length === 0 ? (
+            <div className="py-12 text-center text-sm text-muted-foreground bg-muted/20 rounded-xl border border-border/50 border-dashed">
+              Standings will appear once the tournament data is published.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {groups.map((group) => (
+                <GroupCard key={group.name} name={group.name} rows={group.rows} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === "knockout" && (
+        <div className="flex flex-col gap-4">
+          <div className="mb-2">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              Knockout Stage Bracket
+            </h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              Interactive 32-team tournament bracket. Pan and zoom to explore the path to the final.
+            </p>
+          </div>
+          <WorldCupBracket />
+        </div>
+      )}
+
     </section>
   );
 }
