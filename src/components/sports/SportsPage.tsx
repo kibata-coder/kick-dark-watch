@@ -90,9 +90,41 @@ export function SportsPage(props: SportsPageProps) {
 
   const groupedMatches = useMemo(() => {
     if (!groupByLeague) return null;
-    const groups: Record<string, Match[]> = {};
+    
+    // Initialize with the user's explicit list to guarantee they ALWAYS appear
+    const groups: Record<string, Match[]> = {
+      "LIVE CHANNEL": [],
+      "World Cup": [],
+      "English Premier League": [],
+      "La Liga": [],
+      "Bundesliga": [],
+      "Serie A": [],
+      "Ligue 1": [],
+      "Saudi Pro League": [],
+      "Brasileirão": [],
+      "MLS": [],
+      "Primeira Liga": [],
+      "Eredivisie": []
+    };
+
     matches.forEach((m) => {
-      const lg = getLeagueName(m, defaultLeague);
+      let lg = getLeagueName(m, defaultLeague);
+      
+      // Normalize API names to match our guaranteed UI keys
+      const lower = lg.trim().toLowerCase();
+      if (lower === "live channel") lg = "LIVE CHANNEL";
+      else if (lower.includes("world cup") || lower.includes("worldcup")) lg = "World Cup";
+      else if (lower === "premier league" || lower === "english premier league" || lower === "england - premier league" || lower === "epl") lg = "English Premier League";
+      else if (lower === "la liga" || lower === "laliga" || lower === "spain - la liga" || lower === "spanish la liga") lg = "La Liga";
+      else if (lower.includes("bundesliga") && !lower.includes("austria") && !lower.includes("women")) lg = "Bundesliga";
+      else if (lower === "serie a" || lower === "italy - serie a" || lower === "italy serie a") lg = "Serie A";
+      else if (lower === "ligue 1" || lower === "france - ligue 1" || lower === "france ligue 1") lg = "Ligue 1";
+      else if (lower.includes("saudi pro league") || lower === "saudi arabia - pro league" || lower === "saudi arabian pro league" || lower === "saudi league") lg = "Saudi Pro League";
+      else if (lower.includes("brasileirão") || lower.includes("brasileirao") || lower === "serie a (brazil)" || lower === "brazil - serie a") lg = "Brasileirão";
+      else if (lower === "mls" || lower === "major league soccer" || lower === "usa - mls") lg = "MLS";
+      else if (lower === "primeira liga" || lower === "portugal - primeira liga") lg = "Primeira Liga";
+      else if (lower === "eredivisie" || lower === "netherlands - eredivisie") lg = "Eredivisie";
+
       if (!groups[lg]) groups[lg] = [];
       groups[lg].push(m);
     });
@@ -269,18 +301,24 @@ export function SportsPage(props: SportsPageProps) {
                       </h3>
                     )}
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
-                      {leagueMatches.map((m) =>
-                        isChannelCard(m) ? (
-                          <ChannelCard key={String(m.id)} match={m} onWatch={handleWatch} />
-                        ) : (
-                          <MatchCard
-                            key={String(m.id)}
-                            match={m}
-                            defaultLeague={defaultLeague}
-                            onWatch={handleWatch}
-                            isPortrait={category === "mma"}
-                          />
-                        ),
+                      {leagueMatches.length > 0 ? (
+                        leagueMatches.map((m) =>
+                          isChannelCard(m) ? (
+                            <ChannelCard key={String(m.id)} match={m} onWatch={handleWatch} />
+                          ) : (
+                            <MatchCard
+                              key={String(m.id)}
+                              match={m}
+                              defaultLeague={defaultLeague}
+                              onWatch={handleWatch}
+                              isPortrait={category === "mma"}
+                            />
+                          ),
+                        )
+                      ) : (
+                        <div className="col-span-full py-10 px-4 text-center text-sm font-medium text-muted-foreground bg-muted/10 border border-border/50 border-dashed rounded-xl">
+                          No matches scheduled today.
+                        </div>
                       )}
                     </div>
                   </div>
