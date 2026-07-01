@@ -47,7 +47,7 @@ function getLeagueName(m: Match, defaultLeague: string): string {
 export function getLeagueRank(leagueName: string): number {
   const lower = leagueName.trim().toLowerCase();
   if (lower === "live channel") return 0;
-  if (lower.includes("world cup") || lower.includes("worldcup")) return 1;
+  if (lower.includes("world championship") || lower.includes("world cup") || lower.includes("worldcup")) return 1;
   if (lower === "premier league" || lower === "english premier league" || lower === "england - premier league" || lower === "epl") return 2;
   if (lower === "la liga" || lower === "laliga" || lower === "spain - la liga" || lower === "spanish la liga") return 3;
   if (lower.includes("bundesliga") && !lower.includes("austria") && !lower.includes("women")) return 4;
@@ -94,7 +94,7 @@ export function SportsPage(props: SportsPageProps) {
     // Initialize with the user's explicit list to guarantee they ALWAYS appear
     const groups: Record<string, Match[]> = {
       "LIVE CHANNEL": [],
-      "World Cup": [],
+      "World Championship": [],
       "English Premier League": [],
       "La Liga": [],
       "Bundesliga": [],
@@ -113,7 +113,7 @@ export function SportsPage(props: SportsPageProps) {
       // Normalize API names to match our guaranteed UI keys
       const lower = lg.trim().toLowerCase();
       if (lower === "live channel") lg = "LIVE CHANNEL";
-      else if (lower.includes("world cup") || lower.includes("worldcup")) lg = "World Cup";
+      else if (lower.includes("world championship") || lower.includes("world cup") || lower.includes("worldcup")) lg = "World Championship";
       else if (lower === "premier league" || lower === "english premier league" || lower === "england - premier league" || lower === "epl") lg = "English Premier League";
       else if (lower === "la liga" || lower === "laliga" || lower === "spain - la liga" || lower === "spanish la liga") lg = "La Liga";
       else if (lower.includes("bundesliga") && !lower.includes("austria") && !lower.includes("women")) lg = "Bundesliga";

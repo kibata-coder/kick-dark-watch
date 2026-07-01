@@ -19,7 +19,7 @@ function FootballLayout() {
         <FootballTab to="/football">Live Matches</FootballTab>
         <FootballTab to="/football/standings">Standings</FootballTab>
         <FootballTab to="/football/news">Latest News</FootballTab>
-        <FootballTab to="/football/world-cup">World Cup 2026</FootballTab>
+        <FootballTab to="/football/world-cup">World Championship</FootballTab>
       </nav>
 
       <Outlet />
