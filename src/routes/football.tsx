@@ -17,9 +17,9 @@ function FootballLayout() {
 
       <nav className="flex gap-2 border-b mb-2 -mx-1 overflow-x-auto scrollbar-hide">
         <FootballTab to="/football">Live Matches</FootballTab>
+        <FootballTab to="/football/world-cup">World Championship</FootballTab>
         <FootballTab to="/football/standings">Standings</FootballTab>
         <FootballTab to="/football/news">Latest News</FootballTab>
-        <FootballTab to="/football/world-cup">World Championship</FootballTab>
       </nav>
 
       <Outlet />
