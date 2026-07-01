@@ -9,12 +9,12 @@ export const Route = createFileRoute("/football/standings")({
 });
 
 const SUPPORTED_LEAGUES = [
-  { name: "Premier League", slug: "eng.1" },
+  { name: "English Premier League", slug: "eng.1" },
   { name: "La Liga", slug: "esp.1" },
   { name: "Bundesliga", slug: "ger.1" },
   { name: "Serie A", slug: "ita.1" },
   { name: "Ligue 1", slug: "fra.1" },
-  { name: "Saudi Pro League", slug: "ksa.1" }, // Wait, Saudi slug is ksa.1? Let's check docs or default to eng.1 if error
+  { name: "Saudi Pro League", slug: "ksa.1" }, 
   { name: "Brasileirão", slug: "bra.1" },
   { name: "MLS", slug: "usa.1" },
   { name: "Primeira Liga", slug: "por.1" },

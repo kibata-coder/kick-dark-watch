@@ -10,12 +10,16 @@ export const Route = createFileRoute("/football/news")({
 });
 
 const SUPPORTED_LEAGUES = [
-  { name: "Top News", slug: "eng.1" }, // Using eng.1 as default top news for now
+  { name: "English Premier League", slug: "eng.1" },
   { name: "La Liga", slug: "esp.1" },
   { name: "Bundesliga", slug: "ger.1" },
   { name: "Serie A", slug: "ita.1" },
   { name: "Ligue 1", slug: "fra.1" },
+  { name: "Saudi Pro League", slug: "ksa.1" }, 
+  { name: "Brasileirão", slug: "bra.1" },
   { name: "MLS", slug: "usa.1" },
+  { name: "Primeira Liga", slug: "por.1" },
+  { name: "Eredivisie", slug: "ned.1" },
 ];
 
 function FootballNewsRoute() {
