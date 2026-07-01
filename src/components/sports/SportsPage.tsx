@@ -44,6 +44,23 @@ function getLeagueName(m: Match, defaultLeague: string): string {
   return name.trim() || defaultLeague;
 }
 
+export function getLeagueRank(leagueName: string): number {
+  const lower = leagueName.trim().toLowerCase();
+  if (lower === "live channel") return 0;
+  if (lower.includes("world cup") || lower.includes("worldcup")) return 1;
+  if (lower === "premier league" || lower === "english premier league" || lower === "england - premier league" || lower === "epl") return 2;
+  if (lower === "la liga" || lower === "laliga" || lower === "spain - la liga" || lower === "spanish la liga") return 3;
+  if (lower.includes("bundesliga") && !lower.includes("austria") && !lower.includes("women")) return 4;
+  if (lower === "serie a" || lower === "italy - serie a" || lower === "italy serie a") return 5;
+  if (lower === "ligue 1" || lower === "france - ligue 1" || lower === "france ligue 1") return 6;
+  if (lower.includes("saudi pro league") || lower === "saudi arabia - pro league" || lower === "saudi arabian pro league" || lower === "saudi league") return 7;
+  if (lower.includes("brasileirão") || lower.includes("brasileirao") || lower === "serie a (brazil)" || lower === "brazil - serie a") return 8;
+  if (lower === "mls" || lower === "major league soccer" || lower === "usa - mls") return 9;
+  if (lower === "primeira liga" || lower === "portugal - primeira liga") return 10;
+  if (lower === "eredivisie" || lower === "netherlands - eredivisie") return 11;
+  return 999;
+}
+
 export function SportsPage(props: SportsPageProps) {
   const {
     category,
@@ -80,23 +97,6 @@ export function SportsPage(props: SportsPageProps) {
       groups[lg].push(m);
     });
 
-    const getLeagueRank = (leagueName: string): number => {
-      const lower = leagueName.trim().toLowerCase();
-      if (lower === "live channel") return 0;
-      if (lower.includes("world cup") || lower.includes("worldcup")) return 1;
-      if (lower === "premier league" || lower === "english premier league" || lower === "england - premier league" || lower === "epl") return 2;
-      if (lower === "la liga" || lower === "laliga" || lower === "spain - la liga" || lower === "spanish la liga") return 3;
-      if (lower.includes("bundesliga") && !lower.includes("austria") && !lower.includes("women")) return 4;
-      if (lower === "serie a" || lower === "italy - serie a" || lower === "italy serie a") return 5;
-      if (lower === "ligue 1" || lower === "france - ligue 1" || lower === "france ligue 1") return 6;
-      if (lower.includes("saudi pro league") || lower === "saudi arabia - pro league" || lower === "saudi arabian pro league" || lower === "saudi league") return 7;
-      if (lower.includes("brasileirão") || lower.includes("brasileirao") || lower === "serie a (brazil)" || lower === "brazil - serie a") return 8;
-      if (lower === "mls" || lower === "major league soccer" || lower === "usa - mls") return 9;
-      if (lower === "primeira liga" || lower === "portugal - primeira liga") return 10;
-      if (lower === "eredivisie" || lower === "netherlands - eredivisie") return 11;
-      return 999;
-    };
-
     const sortedKeys = Object.keys(groups).sort((a, b) => {
       const rankA = getLeagueRank(a);
       const rankB = getLeagueRank(b);
@@ -118,11 +118,8 @@ export function SportsPage(props: SportsPageProps) {
   }, [groupedMatches]);
 
   const isPinned = useCallback((leagueName: string) => {
-    const lower = leagueName.trim().toLowerCase();
-    const isEPL = lower === "premier league" || lower === "english premier league" || lower === "england - premier league" || lower === "epl";
-    const isLaLiga = lower === "la liga" || lower === "laliga" || lower === "spain - la liga" || lower === "spanish la liga";
-    const isWorldCup = lower.includes("world cup") || lower.includes("worldcup");
-    return isWorldCup || isEPL || isLaLiga;
+    const rank = getLeagueRank(leagueName);
+    return rank > 0 && rank <= 11;
   }, []);
 
   const [selected, setSelected] = useState<Match | null>(null);
