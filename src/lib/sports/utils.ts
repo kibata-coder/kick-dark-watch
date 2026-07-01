@@ -43,6 +43,20 @@ export function normalizeMatches(raw: any): Match[] {
     items = raw.data;
   }
 
+  // Handle SportSRC v2 grouped format
+  if (items.length > 0 && items[0].league && items[0].matches) {
+    const flatMatches: any[] = [];
+    for (const group of items) {
+      if (Array.isArray(group.matches)) {
+        for (const m of group.matches) {
+          if (!m.league) m.league = group.league;
+          flatMatches.push(m);
+        }
+      }
+    }
+    items = flatMatches;
+  }
+
   return items.map((m) => {
     // Check if it's TheSportsDB format
     if (m.idEvent) {
