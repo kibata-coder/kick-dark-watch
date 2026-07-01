@@ -1,14 +1,16 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Trophy, RefreshCw, GitMerge } from "lucide-react";
-import { worldCupStandingsQueryOptions } from "@/lib/sports/query";
-import type { WorldCupStandingRow } from "@/lib/sports/types";
+import { worldCupStandingsQueryOptions, matchesQueryOptions } from "@/lib/sports/query";
+import type { WorldCupStandingRow, Match } from "@/lib/sports/types";
+import { MatchCard } from "@/components/sports/MatchCard";
 import { WorldCupBracket } from "@/components/sports/WorldCupBracket";
+import { normalizeMatches } from "@/lib/sports/utils";
 
 export const Route = createFileRoute("/football/world-cup")({
   head: () => ({
@@ -28,7 +30,10 @@ export const Route = createFileRoute("/football/world-cup")({
     links: [{ rel: "preconnect", href: "https://worldcup26.ir" }],
   }),
   loader: ({ context }) =>
-    context.queryClient.ensureQueryData(worldCupStandingsQueryOptions()),
+    Promise.all([
+      context.queryClient.ensureQueryData(worldCupStandingsQueryOptions()),
+      context.queryClient.ensureQueryData(matchesQueryOptions("football"))
+    ]),
   component: WorldCupPage,
   pendingComponent: WorldCupSkeleton,
   errorComponent: WorldCupError,
@@ -39,7 +44,26 @@ export const Route = createFileRoute("/football/world-cup")({
 
 function WorldCupPage() {
   const { data: groups } = useSuspenseQuery(worldCupStandingsQueryOptions());
+  const { data: allMatchesData } = useSuspenseQuery(matchesQueryOptions("football"));
   const [activeTab, setActiveTab] = useState<"groups" | "knockout">("groups");
+
+  const worldCupMatches = useMemo(() => {
+    const allMatches = normalizeMatches(allMatchesData);
+    return allMatches.filter((m) => {
+      const league: any = m.league;
+      const lgName = (typeof league === "object" && league !== null ? league.name : typeof league === "string" ? league : "").toLowerCase();
+      return lgName.includes("world championship") || lgName.includes("world cup") || lgName.includes("worldcup");
+    });
+  }, [allMatchesData]);
+
+  // Dummy watch handler since detailed stream resolution is handled on the main page. 
+  // Clicking the card can route to the main page or just show it if we add the StreamDialog here.
+  // For simplicity, we just link them to the main page using the MatchCard's href (if we set it, or rely on clicking it).
+  const handleWatch = (m: Match) => {
+    // If they want to watch, they can go to the live matches page, or we can handle it.
+    // The MatchCard usually expects an onWatch function.
+    window.location.href = `/football`;
+  };
 
   return (
     <section className="py-6 flex flex-col gap-6">
@@ -60,7 +84,7 @@ function WorldCupPage() {
             activeTab === "knockout" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          <GitMerge className="w-4 h-4" /> Knockout Stage
+          <GitMerge className="w-4 h-4" /> Knockout Stage Matches
         </button>
       </div>
 
@@ -96,10 +120,11 @@ function WorldCupPage() {
               Knockout Stage Bracket
             </h3>
             <p className="text-xs text-muted-foreground mt-1">
-              Interactive 32-team tournament bracket. Pan and zoom to explore the path to the final.
+              Live visual tournament tree mapped from active matches.
             </p>
           </div>
-          <WorldCupBracket />
+          
+          <WorldCupBracket matches={worldCupMatches} />
         </div>
       )}
 

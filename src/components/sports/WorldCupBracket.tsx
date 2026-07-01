@@ -1,59 +1,48 @@
 import { Card } from "@/components/ui/card";
+import type { Match } from "@/lib/sports/types";
 
 type Team = {
   name: string;
   flag: string;
+  score?: string;
+  isWinner?: boolean;
 };
 
-// Based on the user's reference image
-const LEFT_TEAMS: Team[] = [
-  { name: "Germany", flag: "https://flagcdn.com/w40/de.png" },
-  { name: "Paraguay", flag: "https://flagcdn.com/w40/py.png" },
-  { name: "France", flag: "https://flagcdn.com/w40/fr.png" },
-  { name: "Sweden", flag: "https://flagcdn.com/w40/se.png" },
-  { name: "South Africa", flag: "https://flagcdn.com/w40/za.png" },
-  { name: "Canada", flag: "https://flagcdn.com/w40/ca.png" },
-  { name: "Netherlands", flag: "https://flagcdn.com/w40/nl.png" },
-  { name: "Morocco", flag: "https://flagcdn.com/w40/ma.png" },
-  { name: "Portugal", flag: "https://flagcdn.com/w40/pt.png" },
-  { name: "Croatia", flag: "https://flagcdn.com/w40/hr.png" },
-  { name: "Spain", flag: "https://flagcdn.com/w40/es.png" },
-  { name: "Austria", flag: "https://flagcdn.com/w40/at.png" },
-  { name: "USA", flag: "https://flagcdn.com/w40/us.png" },
-  { name: "Bosnia & H..", flag: "https://flagcdn.com/w40/ba.png" },
-  { name: "Belgium", flag: "https://flagcdn.com/w40/be.png" },
-  { name: "Senegal", flag: "https://flagcdn.com/w40/sn.png" },
-];
+type Pair = [Team, Team];
 
-const RIGHT_TEAMS: Team[] = [
-  { name: "Brazil", flag: "https://flagcdn.com/w40/br.png" },
-  { name: "Japan", flag: "https://flagcdn.com/w40/jp.png" },
-  { name: "Ivory Coast", flag: "https://flagcdn.com/w40/ci.png" },
-  { name: "Norway", flag: "https://flagcdn.com/w40/no.png" },
-  { name: "Mexico", flag: "https://flagcdn.com/w40/mx.png" },
-  { name: "Ecuador", flag: "https://flagcdn.com/w40/ec.png" },
-  { name: "England", flag: "https://flagcdn.com/w40/gb-eng.png" },
-  { name: "DR Congo", flag: "https://flagcdn.com/w40/cd.png" },
-  { name: "Argentina", flag: "https://flagcdn.com/w40/ar.png" },
-  { name: "Cape Verde", flag: "https://flagcdn.com/w40/cv.png" },
-  { name: "Australia", flag: "https://flagcdn.com/w40/au.png" },
-  { name: "Egypt", flag: "https://flagcdn.com/w40/eg.png" },
-  { name: "Switzerland", flag: "https://flagcdn.com/w40/ch.png" },
-  { name: "Algeria", flag: "https://flagcdn.com/w40/dz.png" },
-  { name: "Colombia", flag: "https://flagcdn.com/w40/co.png" },
-  { name: "Ghana", flag: "https://flagcdn.com/w40/gh.png" },
-];
+export function WorldCupBracket({ matches = [] }: { matches?: Match[] }) {
+  // Try to cleanly extract 16 knockout matches.
+  // If we don't have enough, we'll pad with empty placeholders.
+  const knockoutMatches = matches.slice(0, 16);
+  const leftMatches = knockoutMatches.slice(0, 8);
+  const rightMatches = knockoutMatches.slice(8, 16);
 
-// Helper to chunk array into pairs
-const chunk = (arr: Team[], size: number) =>
-  Array.from({ length: Math.ceil(arr.length / size) }, (v, i) =>
-    arr.slice(i * size, i * size + size)
-  );
+  const formatTeam = (competitor: any): Team => {
+    if (!competitor) return { name: "TBD", flag: "" };
+    return {
+      name: competitor.name || "TBD",
+      flag: competitor.logo || "",
+      score: competitor.score,
+      isWinner: competitor.winner,
+    };
+  };
 
-const leftPairs = chunk(LEFT_TEAMS, 2);
-const rightPairs = chunk(RIGHT_TEAMS, 2);
+  const mapToPairs = (matchList: Match[]): Pair[] => {
+    const pairs: Pair[] = [];
+    for (let i = 0; i < 8; i++) {
+      if (matchList[i]) {
+        const home = matchList[i].homeTeam;
+        const away = matchList[i].awayTeam;
+        pairs.push([formatTeam(home), formatTeam(away)]);
+      } else {
+        pairs.push([{ name: "TBD", flag: "" }, { name: "TBD", flag: "" }]);
+      }
+    }
+    return pairs;
+  };
 
-export function WorldCupBracket() {
+  const leftPairs = mapToPairs(leftMatches);
+  const rightPairs = mapToPairs(rightMatches);
   return (
     <div className="relative w-full max-w-4xl mx-auto border border-border rounded-xl overflow-hidden bg-[#0a2e15] text-white">
       {/* Background texture simulation (dark green grass vibe) */}
@@ -68,11 +57,20 @@ export function WorldCupBracket() {
               {/* The connecting bracket `]` */}
               <div className="absolute right-[-16px] top-1/4 bottom-1/4 w-4 border-r-2 border-t-2 border-b-2 border-white/80 rounded-r-sm" />
               
-              <div className="flex flex-col gap-2 relative z-10 bg-[#0a2e15]">
+              <div className="flex flex-col gap-2 relative z-10 bg-[#0a2e15] py-1">
                 {pair.map((team, i) => (
-                  <div key={i} className="flex flex-col gap-0.5">
-                    <span className="text-[10px] sm:text-xs font-medium leading-none drop-shadow-md truncate">{team.name}</span>
-                    <img src={team.flag} alt={team.name} className="w-6 h-4 sm:w-8 sm:h-5 object-cover rounded-[2px] shadow-sm" />
+                  <div key={i} className={`flex items-center gap-1.5 ${team.isWinner ? 'text-primary drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] font-bold' : ''}`}>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[10px] sm:text-xs font-medium leading-none drop-shadow-md truncate max-w-[80px]">{team.name}</span>
+                      {team.flag ? (
+                        <img src={team.flag} alt={team.name} className="w-6 h-4 sm:w-8 sm:h-5 object-cover rounded-[2px] shadow-sm bg-white/10" />
+                      ) : (
+                        <div className="w-6 h-4 sm:w-8 sm:h-5 bg-white/10 rounded-[2px]" />
+                      )}
+                    </div>
+                    {team.score !== undefined && team.score !== null && (
+                      <span className="text-xs font-bold bg-black/40 px-1.5 rounded ml-1">{team.score}</span>
+                    )}
                   </div>
                 ))}
               </div>
@@ -150,11 +148,20 @@ export function WorldCupBracket() {
               {/* The connecting bracket `[` */}
               <div className="absolute left-[-16px] top-1/4 bottom-1/4 w-4 border-l-2 border-t-2 border-b-2 border-white/80 rounded-l-sm" />
               
-              <div className="flex flex-col gap-2 relative z-10 bg-[#0a2e15] items-end">
+              <div className="flex flex-col gap-2 relative z-10 bg-[#0a2e15] items-end py-1">
                 {pair.map((team, i) => (
-                  <div key={i} className="flex flex-col items-end gap-0.5">
-                    <span className="text-[10px] sm:text-xs font-medium leading-none drop-shadow-md truncate">{team.name}</span>
-                    <img src={team.flag} alt={team.name} className="w-6 h-4 sm:w-8 sm:h-5 object-cover rounded-[2px] shadow-sm" />
+                  <div key={i} className={`flex items-center gap-1.5 ${team.isWinner ? 'text-primary drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] font-bold' : ''}`}>
+                    {team.score !== undefined && team.score !== null && (
+                      <span className="text-xs font-bold bg-black/40 px-1.5 rounded mr-1">{team.score}</span>
+                    )}
+                    <div className="flex flex-col items-end gap-0.5">
+                      <span className="text-[10px] sm:text-xs font-medium leading-none drop-shadow-md truncate max-w-[80px] text-right">{team.name}</span>
+                      {team.flag ? (
+                        <img src={team.flag} alt={team.name} className="w-6 h-4 sm:w-8 sm:h-5 object-cover rounded-[2px] shadow-sm bg-white/10" />
+                      ) : (
+                        <div className="w-6 h-4 sm:w-8 sm:h-5 bg-white/10 rounded-[2px]" />
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
