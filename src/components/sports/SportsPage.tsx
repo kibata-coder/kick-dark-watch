@@ -202,67 +202,60 @@ export function SportsPage(props: SportsPageProps) {
         return; 
       }
       
-      try {
-        const detail = await qc.fetchQuery(matchDetailQueryOptions(String(m.id), category));
-        const sportSrcUrl = extractStreamUrl(detail);
-        
-        const hName = (m.home?.name?.toLowerCase() || "").replace(/ fc| utd| united| city| afc| cf/g, "").trim();
-        const aName = (m.away?.name?.toLowerCase() || "").replace(/ fc| utd| united| city| afc| cf/g, "").trim();
-        
-        let daddyUrl = null;
-        try {
-          const daddyEvents = await fetchDaddyLive();
-          if (daddyEvents && Array.isArray(daddyEvents)) {
-             let foundDaddyUrl = null;
-             for (const day of daddyEvents) {
-                if (!day.categories) continue;
-                for (const cat of Object.values(day.categories)) {
-                   if (!Array.isArray(cat as any)) continue;
-                   for (const ev of (cat as any[])) {
-                      if (ev.event && ev.channels?.length > 0) {
-                         const evName = ev.event.toLowerCase();
-                         if (hName && aName && evName.includes(hName) && evName.includes(aName)) {
-                            foundDaddyUrl = ev.channels[0].url;
-                            break;
-                         }
-                      }
-                   }
-                   if (foundDaddyUrl) break;
-                }
-                if (foundDaddyUrl) break;
-             }
-             if (foundDaddyUrl) {
-                daddyUrl = foundDaddyUrl;
-             }
-          }
-        } catch (e) {
-          console.error("DaddyLive mapping failed:", e);
-        }
+      const hName = (m.home?.name?.toLowerCase() || "").replace(/ fc| utd| united| city| afc| cf/g, "").trim();
+      const aName = (m.away?.name?.toLowerCase() || "").replace(/ fc| utd| united| city| afc| cf/g, "").trim();
 
-        if (sportSrcUrl && daddyUrl) {
-          setStreamSources([
-            { label: "Server 1 (DaddyLive)", url: daddyUrl },
-            { label: "Server 2 (Backup)", url: sportSrcUrl }
-          ]);
-          setStreamUrl(daddyUrl);
-        } else if (daddyUrl) {
-          setStreamUrl(daddyUrl);
-        } else if (sportSrcUrl) {
-          setStreamUrl(sportSrcUrl);
-        } else if (detailFallbackUrl) {
-          setStreamUrl(detailFallbackUrl);
-        } else {
-          if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
-          setStreamLoading(false);
-        }
-      } catch (e) {
-        console.error(e);
-        if (detailFallbackUrl) {
-          setStreamUrl(detailFallbackUrl);
-        } else {
-          if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
-          setStreamLoading(false);
-        }
+      // Run DaddyLive + SportSRC in parallel — neither blocks the other
+      const [daddyResult, sportSrcResult] = await Promise.allSettled([
+        // 1. DaddyLive — fetch schedule and fuzzy-match team names, return ALL channel links
+        (async () => {
+          const daddyEvents = await fetchDaddyLive();
+          if (!daddyEvents || !Array.isArray(daddyEvents)) return null;
+          for (const day of daddyEvents) {
+            if (!day.categories) continue;
+            for (const cat of Object.values(day.categories)) {
+              if (!Array.isArray(cat as any)) continue;
+              for (const ev of (cat as any[])) {
+                if (ev.event && ev.channels?.length > 0) {
+                  const evName = ev.event.toLowerCase();
+                  if (hName && aName && evName.includes(hName) && evName.includes(aName)) {
+                    // Return ALL available channel links for this event
+                    return (ev.channels as any[]).map((ch: any, i: number) => ({
+                      label: `Link ${i + 1}`,
+                      url: ch.url as string,
+                    }));
+                  }
+                }
+              }
+            }
+          }
+          return null;
+        })(),
+        // 2. SportSRC — get match detail for backup stream
+        (async () => {
+          const detail = await qc.fetchQuery(matchDetailQueryOptions(String(m.id), category));
+          return extractStreamUrl(detail);
+        })(),
+      ]);
+
+      const daddyLinks: { label: string; url: string }[] | null =
+        daddyResult.status === "fulfilled" ? (daddyResult.value as any) : null;
+      const sportSrcUrl = sportSrcResult.status === "fulfilled" ? sportSrcResult.value : null;
+
+      if (daddyLinks && daddyLinks.length > 0) {
+        const sources = [
+          ...daddyLinks,
+          ...(sportSrcUrl ? [{ label: "Backup", url: sportSrcUrl }] : []),
+        ];
+        setStreamSources(sources);
+        setStreamUrl(sources[0].url);
+      } else if (sportSrcUrl) {
+        setStreamUrl(sportSrcUrl);
+      } else if (detailFallbackUrl) {
+        setStreamUrl(detailFallbackUrl);
+      } else {
+        if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+        setStreamLoading(false);
       }
     },
     [qc, category, staticStreamResolver, staticStreamSources, detailFallbackUrl, fetchDetail],
