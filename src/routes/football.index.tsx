@@ -22,7 +22,7 @@ const staticMatches: Match[] = [
     title: "Sky Sports PL",
     home: {
       name: "Sky Sports PL",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Sky_Sports_Premier_League_-_Logo_2025.svg/1280px-Sky_Sports_Premier_League_-_Logo_2025.svg.png",
+      logo: "/sky-sports-pl.png",
     },
     away: { name: "Sky Sports PL", logo: "" },
     league: { name: "LIVE CHANNEL" },
