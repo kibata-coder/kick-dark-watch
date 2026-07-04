@@ -213,7 +213,7 @@ export function SportsPage(props: SportsPageProps) {
         try {
           const daddyEvents = await fetchDaddyLive();
           if (daddyEvents && Array.isArray(daddyEvents)) {
-             let foundChannelId = null;
+             let foundDaddyUrl = null;
              for (const day of daddyEvents) {
                 if (!day.categories) continue;
                 for (const cat of Object.values(day.categories)) {
@@ -222,17 +222,17 @@ export function SportsPage(props: SportsPageProps) {
                       if (ev.event && ev.channels?.length > 0) {
                          const evName = ev.event.toLowerCase();
                          if (hName && aName && evName.includes(hName) && evName.includes(aName)) {
-                            foundChannelId = ev.channels[0].channel_id;
+                            foundDaddyUrl = ev.channels[0].url;
                             break;
                          }
                       }
                    }
-                   if (foundChannelId) break;
+                   if (foundDaddyUrl) break;
                 }
-                if (foundChannelId) break;
+                if (foundDaddyUrl) break;
              }
-             if (foundChannelId) {
-                daddyUrl = `https://daddylive.li/embed/embed.php?id=${foundChannelId}&player=1&source=tv2.json`;
+             if (foundDaddyUrl) {
+                daddyUrl = foundDaddyUrl;
              }
           }
         } catch (e) {
@@ -241,14 +241,14 @@ export function SportsPage(props: SportsPageProps) {
 
         if (sportSrcUrl && daddyUrl) {
           setStreamSources([
-            { label: "Server 1 (SportSRC)", url: sportSrcUrl },
-            { label: "Server 2 (DaddyLive)", url: daddyUrl }
+            { label: "Server 1 (DaddyLive)", url: daddyUrl },
+            { label: "Server 2 (Backup)", url: sportSrcUrl }
           ]);
-          setStreamUrl(sportSrcUrl);
-        } else if (sportSrcUrl) {
-          setStreamUrl(sportSrcUrl);
+          setStreamUrl(daddyUrl);
         } else if (daddyUrl) {
           setStreamUrl(daddyUrl);
+        } else if (sportSrcUrl) {
+          setStreamUrl(sportSrcUrl);
         } else if (detailFallbackUrl) {
           setStreamUrl(detailFallbackUrl);
         } else {
