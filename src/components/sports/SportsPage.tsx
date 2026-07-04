@@ -45,7 +45,7 @@ function normalizeName(raw: string): string {
 
 /** Keywords to pre-filter DaddyLive events by sport category */
 const CATEGORY_KEYWORDS: Record<string, string[]> = {
-  football:   ["football", "soccer"],
+  football:   ["football", "soccer", "fifa", "world cup", "uefa"],
   basketball: ["basketball", "nba", "wnba"],
   tennis:     ["tennis", "wimbledon", "atp", "wta"],
   cricket:    ["cricket"],
@@ -264,13 +264,14 @@ export function SportsPage(props: SportsPageProps) {
           const daddyEvents = await fetchDaddyEvents();
           for (const day of daddyEvents) {
             if (!day.categories) continue;
-            for (const cat of Object.values(day.categories)) {
+            for (const [dlCat, cat] of Object.entries(day.categories)) {
               if (!Array.isArray(cat as any)) continue;
+              const dlCatLower = dlCat.toLowerCase();
               for (const ev of (cat as any[])) {
                 if (!ev.event || !ev.channels?.length) continue;
                 const evLower = ev.event.toLowerCase();
                 // Pre-filter by sport category to avoid cross-sport false matches
-                if (catKeys.length > 0 && !catKeys.some(k => evLower.includes(k))) continue;
+                if (catKeys.length > 0 && !catKeys.some(k => evLower.includes(k) || dlCatLower.includes(k))) continue;
                 const evNorm = normalizeName(ev.event);
                 // Strategy 1: full normalised name match
                 const fullMatch =

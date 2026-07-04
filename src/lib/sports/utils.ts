@@ -111,6 +111,10 @@ export function normalizeMatches(raw: any): Match[] {
 }
 
 export function extractStreamUrl(raw: any): string | null {
+  // Try to extract SportSRC stream (v1 format)
+  if (raw?.data?.sources && Array.isArray(raw.data.sources) && raw.data.sources.length > 0) {
+    return raw.data.sources[0].embedUrl || null;
+  }
   // Try to extract SportSRC stream (v2 format)
   if (raw?.sources && Array.isArray(raw.sources) && raw.sources.length > 0) {
     return raw.sources[0].embedUrl || null;
