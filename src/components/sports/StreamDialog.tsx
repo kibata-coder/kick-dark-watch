@@ -108,8 +108,9 @@ export function StreamDialog({
               key={activeUrl}
               src={activeUrl}
               onLoad={onIframeLoad}
-              allow="autoplay; fullscreen; encrypted-media"
+              allow="autoplay; fullscreen *; picture-in-picture *; encrypted-media"
               allowFullScreen
+              referrerPolicy="no-referrer"
               frameBorder="0"
               className={`absolute inset-0 h-full w-full border-0 transition-opacity duration-700 ${streamLoading ? "opacity-0" : "opacity-100"}`}
             />
