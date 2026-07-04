@@ -9,7 +9,7 @@ import { MatchCard } from "./MatchCard";
 import { ChannelCard } from "./ChannelCard";
 import { matchesQueryOptions, matchDetailQueryOptions } from "@/lib/sports/query";
 import { normalizeMatches, extractStreamUrl } from "@/lib/sports/utils";
-import { getMatchDetail } from "@/lib/sportsrc.functions";
+import { getMatchDetail, getDaddyLiveEvents } from "@/lib/sportsrc.functions";
 import type { Match } from "@/lib/sports/types";
 
 const StreamDialog = lazy(() =>
@@ -82,6 +82,7 @@ export function SportsPage(props: SportsPageProps) {
   const options = matchesQueryOptions(category);
   const { data, isFetching, refetch } = useSuspenseQuery(options);
   const fetchDetail = useServerFn(getMatchDetail);
+  const fetchDaddyLive = useServerFn(getDaddyLiveEvents);
 
   const matches = useMemo<Match[]>(
     () => [...staticMatches, ...normalizeMatches(data)],
@@ -205,20 +206,49 @@ export function SportsPage(props: SportsPageProps) {
         const detail = await qc.fetchQuery(matchDetailQueryOptions(String(m.id), category));
         const sportSrcUrl = extractStreamUrl(detail);
         
-        const hSlug = m.home?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || "";
-        const aSlug = m.away?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || "";
-        const zetaUrl = hSlug && aSlug ? `https://zetastream.dpdns.org/watch/sports/1?id=${hSlug}-vs-${aSlug}` : null;
+        const hName = m.home?.name?.toLowerCase().replace(/ fc| utd| united| city| afc| cf/g, "").trim() || "";
+        const aName = m.away?.name?.toLowerCase().replace(/ fc| utd| united| city| afc| cf/g, "").trim() || "";
+        
+        let daddyUrl = null;
+        try {
+          const daddyEvents = await fetchDaddyLive();
+          if (daddyEvents && Array.isArray(daddyEvents)) {
+             let foundChannelId = null;
+             for (const day of daddyEvents) {
+                if (!day.categories) continue;
+                for (const cat of Object.values(day.categories)) {
+                   if (!Array.isArray(cat as any)) continue;
+                   for (const ev of (cat as any[])) {
+                      if (ev.event && ev.channels?.length > 0) {
+                         const evName = ev.event.toLowerCase();
+                         if (hName && aName && evName.includes(hName) && evName.includes(aName)) {
+                            foundChannelId = ev.channels[0].channel_id;
+                            break;
+                         }
+                      }
+                   }
+                   if (foundChannelId) break;
+                }
+                if (foundChannelId) break;
+             }
+             if (foundChannelId) {
+                daddyUrl = `https://daddylive.li/embed/embed.php?id=${foundChannelId}&player=1&source=tv2.json`;
+             }
+          }
+        } catch (e) {
+          console.error("DaddyLive mapping failed:", e);
+        }
 
-        if (sportSrcUrl && zetaUrl) {
+        if (sportSrcUrl && daddyUrl) {
           setStreamSources([
             { label: "Server 1 (SportSRC)", url: sportSrcUrl },
-            { label: "Server 2 (ZetaStream)", url: zetaUrl }
+            { label: "Server 2 (DaddyLive)", url: daddyUrl }
           ]);
           setStreamUrl(sportSrcUrl);
         } else if (sportSrcUrl) {
           setStreamUrl(sportSrcUrl);
-        } else if (zetaUrl) {
-          setStreamUrl(zetaUrl);
+        } else if (daddyUrl) {
+          setStreamUrl(daddyUrl);
         } else if (detailFallbackUrl) {
           setStreamUrl(detailFallbackUrl);
         } else {
@@ -227,13 +257,7 @@ export function SportsPage(props: SportsPageProps) {
         }
       } catch (e) {
         console.error(e);
-        const hSlug = m.home?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || "";
-        const aSlug = m.away?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || "";
-        const zetaUrl = hSlug && aSlug ? `https://zetastream.dpdns.org/watch/sports/1?id=${hSlug}-vs-${aSlug}` : null;
-        
-        if (zetaUrl) {
-          setStreamUrl(zetaUrl);
-        } else if (detailFallbackUrl) {
+        if (detailFallbackUrl) {
           setStreamUrl(detailFallbackUrl);
         } else {
           if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
