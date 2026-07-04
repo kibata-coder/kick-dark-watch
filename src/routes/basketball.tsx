@@ -12,7 +12,7 @@ const staticMatches: Match[] = [
     away: { name: "ESPN LIVE", logo: "" },
     league: { name: "LIVE CHANNEL" },
     status: "inprogress",
-    daddyStreamUrl: "https://dlhd.pk/stream/stream-302.php",
+    daddyStreamUrl: "https://daddylive.li/embed/embed.php?id=302&player=1&source=tv.json",
   },
   {
     id: "server-2-nba",
@@ -21,7 +21,7 @@ const staticMatches: Match[] = [
     away: { name: "NBA TV", logo: "" },
     league: { name: "LIVE CHANNEL" },
     status: "inprogress",
-    daddyStreamUrl: "https://dlhd.pk/stream/stream-404.php",
+    daddyStreamUrl: "https://daddylive.li/embed/embed.php?id=404&player=1&source=tv.json",
   },
 ];
 
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/basketball")({
     ],
     links: [
       { rel: "preconnect", href: "https://www.thesportsdb.com" },
-      { rel: "preconnect", href: "https://dlhd.pk" },
+      { rel: "preconnect", href: "https://daddylive.li" },
     ],
   }),
   loader: ({ context }) => {
@@ -54,7 +54,7 @@ function BasketballPage() {
         defaultLeague="Basketball"
         staticMatches={staticMatches}
         isChannelCard={(m) => String(m.id).startsWith("server-")}
-        detailFallbackUrl="https://dlhd.pk/stream/stream-302.php"
+        detailFallbackUrl="https://daddylive.li/embed/embed.php?id=302&player=1&source=tv.json"
         upcomingSub="Please check back closer to tip-off."
       />
     </Suspense>

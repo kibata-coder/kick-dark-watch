@@ -12,7 +12,7 @@ const staticMatches: Match[] = [
     away: { name: "Sky Sports Action", logo: "" },
     league: { name: "LIVE CHANNEL" },
     status: "inprogress",
-    daddyStreamUrl: "https://dlhd.pk/stream/stream-131.php",
+    daddyStreamUrl: "https://daddylive.li/embed/embed.php?id=131&player=1&source=tv.json",
   },
 ];
 

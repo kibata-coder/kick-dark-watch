@@ -12,7 +12,7 @@ const staticMatches: Match[] = [
     away: { name: "BeIN Sports", logo: "" },
     league: { name: "LIVE CHANNEL" },
     status: "inprogress",
-    daddyStreamUrl: "https://dlhd.pk/stream/stream-87.php",
+    daddyStreamUrl: "https://daddylive.li/embed/embed.php?id=87&player=1&source=tv.json",
   },
 ];
 

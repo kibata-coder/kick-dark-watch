@@ -15,7 +15,7 @@ const staticMatches: Match[] = [
     away: { name: "Sky Sports News", logo: "" },
     league: { name: "LIVE CHANNEL" },
     status: "inprogress",
-    daddyStreamUrl: "https://dlhd.pk/stream/stream-366.php",
+    daddyStreamUrl: "https://daddylive.li/embed/embed.php?id=366&player=1&source=tv.json",
   },
   {
     id: "channel-skypl",
@@ -27,7 +27,7 @@ const staticMatches: Match[] = [
     away: { name: "Sky Sports PL", logo: "" },
     league: { name: "LIVE CHANNEL" },
     status: "inprogress",
-    daddyStreamUrl: "https://dlhd.pk/stream/stream-130.php",
+    daddyStreamUrl: "https://daddylive.li/embed/embed.php?id=130&player=1&source=tv.json",
   },
 ];
 
@@ -45,7 +45,7 @@ export const Route = createFileRoute("/football/")({
     ],
     links: [
       { rel: "preconnect", href: "https://www.thesportsdb.com" },
-      { rel: "preconnect", href: "https://dlhd.pk" },
+      { rel: "preconnect", href: "https://daddylive.li" },
     ],
   }),
   loader: ({ context }) => {

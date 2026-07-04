@@ -7,7 +7,6 @@ import type { Match } from "@/lib/sports/types";
 const F1_SOURCES = [
   { label: "Server 1", url: "https://streams.center/embed/ch49.php" },
   { label: "Server 2", url: "https://daddylive.li/embed/embed.php?id=60&player=1&source=tv.json" },
-  { label: "Server 3", url: "https://dlhd.pk/stream/stream-60.php" },
 ];
 
 const staticMatches: Match[] = [
