@@ -56,12 +56,12 @@ export function StreamDialog({
 
           {/* Server switcher buttons */}
           {hasMultipleSources && !isUpcoming && (
-            <div className="flex items-center gap-2 mt-2 flex-wrap">
+            <div className="flex items-center gap-2 mt-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden w-full">
               {sources.map((src, i) => (
                 <button
                   key={i}
                   onClick={() => setActiveIndex(i)}
-                  className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                  className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors shrink-0 ${
                     i === activeIndex
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -108,7 +108,7 @@ export function StreamDialog({
               key={activeUrl}
               src={activeUrl}
               onLoad={onIframeLoad}
-              allow="autoplay; fullscreen *; picture-in-picture *; encrypted-media"
+              allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
               allowFullScreen
               referrerPolicy="no-referrer"
               frameBorder="0"
