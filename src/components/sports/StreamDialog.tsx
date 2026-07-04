@@ -96,9 +96,14 @@ export function StreamDialog({
 
           {/* Loading State */}
           {!isUpcoming && streamLoading && (
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90">
-              <RefreshCw className="h-8 w-8 animate-spin text-primary mb-3" />
-              <span className="text-sm font-medium text-muted-foreground">Connecting to stream...</span>
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/95 backdrop-blur-md">
+              <div className="relative flex h-20 w-20 items-center justify-center">
+                <div className="absolute inset-0 animate-ping rounded-full bg-primary/20"></div>
+                <div className="absolute inset-2 animate-pulse rounded-full bg-primary/30"></div>
+                <Tv className="relative h-8 w-8 text-primary animate-pulse" />
+              </div>
+              <span className="mt-6 text-sm font-semibold tracking-widest text-primary uppercase animate-pulse">Establishing Secure Link</span>
+              <span className="mt-2 text-xs text-muted-foreground/60">Tuning into broadcast...</span>
             </div>
           )}
 
