@@ -3,7 +3,7 @@ import { Outlet, Link, createRootRouteWithContext, useRouter, HeadContent, Scrip
 import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { Radio, Trophy, Home, Flame } from "lucide-react";
+import { Radio, Home } from "lucide-react";
 
 function NotFoundComponent() {
   return (
@@ -66,12 +66,20 @@ function RootComponent() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-lg shadow-primary/30"><Radio className="h-4 w-4" /></div>
                 <span className="text-lg font-bold tracking-tight">SOUDsports</span>
               </Link>
-              <nav className="hidden md:flex items-center gap-1">
-                <Link to="/" className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary"><Home className="h-4 w-4" /> Home</Link>
-                <Link to="/football" className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary"><Trophy className="h-4 w-4" /> Football</Link>
-                <Link to="/basketball" className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary"><Trophy className="h-4 w-4" /> Basketball</Link>
-                <Link to="/f1" className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary"><Radio className="h-4 w-4" /> Motorsport</Link>
-                <Link to="/ufc" className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary"><Flame className="h-4 w-4" /> UFC</Link>
+              <nav className="hidden md:flex items-center gap-1 overflow-x-auto">
+                <Link to="/" className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary whitespace-nowrap"><Home className="h-4 w-4" /> Home</Link>
+                <Link to="/football" className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary whitespace-nowrap">⚽ Football</Link>
+                <Link to="/basketball" className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary whitespace-nowrap">🏀 Basketball</Link>
+                <Link to="/tennis" className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary whitespace-nowrap">🎾 Tennis</Link>
+                <Link to="/cricket" className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary whitespace-nowrap">🏏 Cricket</Link>
+                <Link to="/f1" className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary whitespace-nowrap">🏎 Motorsport</Link>
+                <Link to="/boxing" className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary whitespace-nowrap">🥊 Boxing</Link>
+                <Link to="/ufc" className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary whitespace-nowrap">🔥 UFC</Link>
+                <Link to="/rugby" className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary whitespace-nowrap">🏉 Rugby</Link>
+                <Link to="/golf" className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary whitespace-nowrap">⛳ Golf</Link>
+                <Link to="/icehockey" className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary whitespace-nowrap">🏒 Ice Hockey</Link>
+                <Link to="/baseball" className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary whitespace-nowrap">⚾ Baseball</Link>
+                <Link to="/volleyball" className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary whitespace-nowrap">🏐 Volleyball</Link>
               </nav>
             </div>
           </div>

@@ -12,6 +12,54 @@ import { normalizeMatches, extractStreamUrl } from "@/lib/sports/utils";
 import { getMatchDetail } from "@/lib/sportsrc.functions";
 import type { Match } from "@/lib/sports/types";
 
+// ─── DaddyLive: module-level cache (shared across all sport pages) ───────────
+let _daddyCache: { data: any[]; ts: number } | null = null;
+const DADDY_TTL = 3 * 60 * 1000; // 3 minutes
+
+async function fetchDaddyEvents(): Promise<any[]> {
+  if (_daddyCache && Date.now() - _daddyCache.ts < DADDY_TTL) {
+    return _daddyCache.data;
+  }
+  try {
+    const res = await fetch("https://daddylive.li/api/events");
+    if (!res.ok) return _daddyCache?.data ?? [];
+    const data = await res.json();
+    if (Array.isArray(data)) {
+      _daddyCache = { data, ts: Date.now() };
+      return data;
+    }
+  } catch {}
+  return _daddyCache?.data ?? [];
+}
+
+/** Normalize a team/player name for fuzzy matching across all sports */
+function normalizeName(raw: string): string {
+  return raw
+    .toLowerCase()
+    // strip common football/sports suffixes and articles
+    .replace(/\b(fc|cf|afc|sc|ac|bk|sk|if|ff|fk|hk|ok|ik|united|utd|city|town|rovers|wanderers|athletic|atlético|atletico|real|sporting|club|de|the|and|vs)\b/g, " ")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Keywords to pre-filter DaddyLive events by sport category */
+const CATEGORY_KEYWORDS: Record<string, string[]> = {
+  football:   ["football", "soccer"],
+  basketball: ["basketball", "nba", "wnba"],
+  tennis:     ["tennis", "wimbledon", "atp", "wta"],
+  cricket:    ["cricket"],
+  mma:        ["mma", "ufc", "combat", "boxing"],
+  boxing:     ["boxing", "combat", "mma"],
+  rugby:      ["rugby"],
+  golf:       ["golf"],
+  icehockey:  ["hockey", "nhl"],
+  baseball:   ["baseball", "mlb"],
+  volleyball: ["volleyball"],
+  motorsport: ["motor", "formula", "f1", "motogp", "racing", "nascar", "grand prix"],
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
 const StreamDialog = lazy(() =>
   import("./StreamDialog").then((m) => ({ default: m.StreamDialog })),
 );
@@ -201,31 +249,40 @@ export function SportsPage(props: SportsPageProps) {
         return; 
       }
       
-      const hName = (m.home?.name?.toLowerCase() || "").replace(/ fc| utd| united| city| afc| cf/g, "").trim();
-      const aName = (m.away?.name?.toLowerCase() || "").replace(/ fc| utd| united| city| afc| cf/g, "").trim();
+      const hNorm = normalizeName(m.home?.name || "");
+      const aNorm = normalizeName(m.away?.name || "");
+      const catKeys = CATEGORY_KEYWORDS[category] ?? [];
 
       // Run DaddyLive + SportSRC in parallel — neither blocks the other
       const [daddyResult, sportSrcResult] = await Promise.allSettled([
-        // 1. DaddyLive — fetch schedule and fuzzy-match team names, return ALL channel links
+        // 1. DaddyLive — cached browser fetch + robust multi-sport matching
         (async () => {
-          // Fetch directly from the browser — avoids Cloudflare server IP blocks
-          const res = await fetch("https://daddylive.li/api/events");
-          if (!res.ok) return null;
-          const daddyEvents = await res.json();
-          if (!Array.isArray(daddyEvents)) return null;
+          const daddyEvents = await fetchDaddyEvents();
           for (const day of daddyEvents) {
             if (!day.categories) continue;
             for (const cat of Object.values(day.categories)) {
               if (!Array.isArray(cat as any)) continue;
               for (const ev of (cat as any[])) {
-                if (ev.event && ev.channels?.length > 0) {
-                  const evName = ev.event.toLowerCase();
-                  if (hName && aName && evName.includes(hName) && evName.includes(aName)) {
-                    return (ev.channels as any[]).map((ch: any, i: number) => ({
-                      label: `Link ${i + 1}`,
-                      url: ch.url as string,
-                    }));
-                  }
+                if (!ev.event || !ev.channels?.length) continue;
+                const evLower = ev.event.toLowerCase();
+                // Pre-filter by sport category to avoid cross-sport false matches
+                if (catKeys.length > 0 && !catKeys.some(k => evLower.includes(k))) continue;
+                const evNorm = normalizeName(ev.event);
+                // Strategy 1: full normalised name match
+                const fullMatch =
+                  hNorm && aNorm && evNorm.includes(hNorm) && evNorm.includes(aNorm);
+                // Strategy 2: every significant word of each name appears
+                const hWords = hNorm.split(" ").filter(w => w.length > 2);
+                const aWords = aNorm.split(" ").filter(w => w.length > 2);
+                const wordMatch =
+                  hWords.length > 0 && aWords.length > 0 &&
+                  hWords.every(w => evNorm.includes(w)) &&
+                  aWords.every(w => evNorm.includes(w));
+                if (fullMatch || wordMatch) {
+                  return (ev.channels as any[]).map((ch: any, i: number) => ({
+                    label: `Link ${i + 1}`,
+                    url: ch.url as string,
+                  }));
                 }
               }
             }
