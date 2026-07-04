@@ -48,8 +48,8 @@ export function StreamDialog({
 
   return (
     <Dialog open={!!selected} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-5xl border-border bg-card p-0 overflow-hidden sm:rounded-2xl">
-        <DialogHeader className="border-b border-border/60 px-5 py-4">
+      <DialogContent className="max-w-5xl w-full flex flex-col max-h-[100dvh] sm:max-h-[90dvh] border-border bg-card p-0 overflow-hidden sm:rounded-2xl">
+        <DialogHeader className="shrink-0 border-b border-border/60 px-4 py-3 sm:px-5 sm:py-4">
           <DialogTitle>
             {selected?.title || `${selected?.home?.name ?? ""}${selected?.away?.name ? ` vs ${selected.away.name}` : ""}`}
           </DialogTitle>
@@ -75,7 +75,7 @@ export function StreamDialog({
           )}
         </DialogHeader>
         
-        <div className="relative aspect-video w-full bg-black">
+        <div className="relative w-full flex-1 bg-black min-h-[300px] sm:min-h-[400px]">
           {/* Upcoming State */}
           {isUpcoming && (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90 px-4 text-center">
