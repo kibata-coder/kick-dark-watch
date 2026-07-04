@@ -60,13 +60,12 @@ function RootComponent() {
           <div className="absolute bottom-0 right-0 h-[400px] w-[400px] rounded-full blur-3xl" style={{ backgroundColor: "oklch(0.7 0.22 25 / 0.08)" }} />
         </div>
         <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-6">
-              <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-lg shadow-primary/30"><Radio className="h-4 w-4" /></div>
-                <span className="text-lg font-bold tracking-tight">SOUDsports</span>
-              </Link>
-              <nav className="hidden md:flex items-center gap-1 overflow-x-auto">
+          <div className="mx-auto flex flex-col md:flex-row md:items-center gap-3 md:gap-6 max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+            <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80 shrink-0">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-lg shadow-primary/30"><Radio className="h-4 w-4" /></div>
+              <span className="text-lg font-bold tracking-tight">SOUDsports</span>
+            </Link>
+            <nav className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0 [&::-webkit-scrollbar]:hidden w-full">
                 <Link to="/" className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary whitespace-nowrap"><Home className="h-4 w-4" /> Home</Link>
                 <Link to="/football" className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary whitespace-nowrap">⚽ Football</Link>
                 <Link to="/basketball" className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary whitespace-nowrap">🏀 Basketball</Link>
@@ -80,8 +79,7 @@ function RootComponent() {
                 <Link to="/icehockey" className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary whitespace-nowrap">🏒 Ice Hockey</Link>
                 <Link to="/baseball" className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary whitespace-nowrap">⚾ Baseball</Link>
                 <Link to="/volleyball" className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-primary/10 [&.active]:text-primary whitespace-nowrap">🏐 Volleyball</Link>
-              </nav>
-            </div>
+            </nav>
           </div>
         </header>
         <Outlet />

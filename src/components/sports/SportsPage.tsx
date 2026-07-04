@@ -313,7 +313,7 @@ export function SportsPage(props: SportsPageProps) {
         
         if (daddyLinks) {
           daddyLinks.forEach((link) => {
-            sources.push({ label: `Server ${sources.length + 1} (DaddyLive)`, url: link.url });
+            sources.push({ label: `Server ${sources.length + 1}`, url: link.url });
           });
         }
         
