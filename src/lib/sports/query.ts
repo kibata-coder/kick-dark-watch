@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getMatches as getTsdbMatches, getMatchDetail as getTsdbMatchDetail, getStandings } from "@/lib/thesportsdb.functions";
+import { getStandings } from "@/lib/thesportsdb.functions";
 import { getMatches as getSportsrcMatches, getMatchDetail as getSportsrcMatchDetail } from "@/lib/sportsrc.functions";
 import { getWorldCupStandings } from "@/lib/worldcup.functions";
 import { getEspnStandings, getEspnNews, getEspnScoreboard } from "@/lib/espn.functions";
@@ -10,12 +10,9 @@ export const matchesQueryOptions = (category: string) =>
   queryOptions({
     queryKey: ["sports", "matches", category],
     queryFn: () => {
-      if (category === "football") {
-        // SportSRC v2 wants a date, default to today
-        const date = new Date().toISOString().split("T")[0];
-        return getSportsrcMatches({ data: { date } });
-      }
-      return getTsdbMatches({ data: { category } });
+      // SportSRC v2 wants a date, default to today
+      const date = new Date().toISOString().split("T")[0];
+      return getSportsrcMatches({ data: { date, category } });
     },
     staleTime: FIVE_MIN,
     gcTime: 30 * 60 * 1000,
@@ -27,10 +24,7 @@ export const matchDetailQueryOptions = (id: string, category: string) =>
   queryOptions({
     queryKey: ["sports", "detail", category, id],
     queryFn: () => {
-      if (category === "football") {
-        return getSportsrcMatchDetail({ data: { id } });
-      }
-      return getTsdbMatchDetail({ data: { id, category } });
+      return getSportsrcMatchDetail({ data: { id, category } });
     },
     staleTime: FIVE_MIN,
   });

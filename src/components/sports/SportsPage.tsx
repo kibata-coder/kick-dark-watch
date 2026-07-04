@@ -240,13 +240,17 @@ export function SportsPage(props: SportsPageProps) {
       if (sources && sources.length > 0) {
         setStreamSources(sources);
         setStreamUrl(sources[0].url);
+        if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+        setStreamLoading(false);
         return;
       }
 
       const staticUrl = staticStreamResolver?.(m) ?? m.daddyStreamUrl ?? null;
       if (staticUrl) {
         setStreamUrl(staticUrl);
-        return; 
+        if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+        setStreamLoading(false);
+        return;
       }
       
       const hNorm = normalizeName(m.home?.name || "");

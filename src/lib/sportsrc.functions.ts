@@ -19,13 +19,11 @@ async function callSportsrc(qs: string): Promise<any> {
 }
 
 export const getMatches = createServerFn({ method: "GET" })
-  .inputValidator((data: { date: string; status?: string }) => data)
+  .inputValidator((data: { date: string; status?: string; category?: string }) => data)
   .handler(async ({ data }) => {
-    // We want to fetch all matches for the day, so we don't strict filter by inprogress unless requested
-    // Usually 'all' or empty returns everything. Let's pass 'all' or omit status.
     const qs = new URLSearchParams();
     qs.set("type", "matches");
-    qs.set("sport", "football");
+    qs.set("sport", data.category || "football");
     if (data.status) {
       qs.set("status", data.status);
     }
@@ -34,19 +32,14 @@ export const getMatches = createServerFn({ method: "GET" })
   });
 
 export const getMatchDetail = createServerFn({ method: "GET" })
-  .inputValidator((data: { id: string }) => data)
+  .inputValidator((data: { id: string; category?: string }) => data)
   .handler(async ({ data }) => {
-    return callSportsrc(`type=detail&id=${encodeURIComponent(data.id)}`);
+    const qs = new URLSearchParams();
+    qs.set("type", "detail");
+    qs.set("id", data.id);
+    if (data.category) {
+      qs.set("sport", data.category);
+    }
+    return callSportsrc(qs.toString());
   });
 
-export const getDaddyLiveEvents = createServerFn({ method: "GET" })
-  .handler(async () => {
-    try {
-      const res = await fetch("https://daddylive.li/api/events");
-      if (!res.ok) return null;
-      return await res.json();
-    } catch (e) {
-      console.error("DaddyLive API fetch error:", e);
-      return null;
-    }
-  });
