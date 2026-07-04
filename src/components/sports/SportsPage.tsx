@@ -304,15 +304,21 @@ export function SportsPage(props: SportsPageProps) {
         daddyResult.status === "fulfilled" ? (daddyResult.value as any) : null;
       const sportSrcUrl = sportSrcResult.status === "fulfilled" ? sportSrcResult.value : null;
 
-      if (daddyLinks && daddyLinks.length > 0) {
-        const sources = [
-          ...daddyLinks,
-          ...(sportSrcUrl ? [{ label: "Backup", url: sportSrcUrl }] : []),
-        ];
+      if (sportSrcUrl || (daddyLinks && daddyLinks.length > 0)) {
+        const sources: { label: string; url: string }[] = [];
+        
+        if (sportSrcUrl) {
+          sources.push({ label: "Server 1", url: sportSrcUrl });
+        }
+        
+        if (daddyLinks) {
+          daddyLinks.forEach((link) => {
+            sources.push({ label: `Server ${sources.length + 1} (DaddyLive)`, url: link.url });
+          });
+        }
+        
         setStreamSources(sources);
         setStreamUrl(sources[0].url);
-      } else if (sportSrcUrl) {
-        setStreamUrl(sportSrcUrl);
       } else if (detailFallbackUrl) {
         setStreamUrl(detailFallbackUrl);
       } else {
