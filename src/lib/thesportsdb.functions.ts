@@ -20,10 +20,23 @@ export const getMatches = createServerFn({ method: "GET" })
     console.log(`[Cache Miss] Fetching fresh ${category} list from API`);
     
     // Map internal categories to TheSportsDB sport names
-    let sport = "Soccer";
-    if (category.toLowerCase() === "basketball") sport = "Basketball";
-    if (category.toLowerCase() === "f1" || category.toLowerCase() === "motorsport") sport = "Motorsport";
-    
+    const sportMap: Record<string, string> = {
+      football:   "Soccer",
+      basketball: "Basketball",
+      motorsport: "Motorsport",
+      f1:         "Motorsport",
+      mma:        "MMA",
+      tennis:     "Tennis",
+      cricket:    "Cricket",
+      boxing:     "Boxing",
+      rugby:      "Rugby",
+      golf:       "Golf",
+      icehockey:  "Ice_Hockey",
+      baseball:   "Baseball",
+      volleyball: "Volleyball",
+    };
+    const sport = sportMap[category.toLowerCase()] ?? "Soccer";
+
     const date = new Date().toISOString().split('T')[0];
     const freshData = await callTheSportsDB(`eventsday.php?d=${date}&s=${sport}`);
     
