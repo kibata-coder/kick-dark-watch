@@ -206,8 +206,8 @@ export function SportsPage(props: SportsPageProps) {
         const detail = await qc.fetchQuery(matchDetailQueryOptions(String(m.id), category));
         const sportSrcUrl = extractStreamUrl(detail);
         
-        const hName = m.home?.name?.toLowerCase().replace(/ fc| utd| united| city| afc| cf/g, "").trim() || "";
-        const aName = m.away?.name?.toLowerCase().replace(/ fc| utd| united| city| afc| cf/g, "").trim() || "";
+        const hName = (m.home?.name?.toLowerCase() || "").replace(/ fc| utd| united| city| afc| cf/g, "").trim();
+        const aName = (m.away?.name?.toLowerCase() || "").replace(/ fc| utd| united| city| afc| cf/g, "").trim();
         
         let daddyUrl = null;
         try {
