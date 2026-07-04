@@ -9,7 +9,7 @@ import { MatchCard } from "./MatchCard";
 import { ChannelCard } from "./ChannelCard";
 import { matchesQueryOptions, matchDetailQueryOptions } from "@/lib/sports/query";
 import { normalizeMatches, extractStreamUrl } from "@/lib/sports/utils";
-import { getMatchDetail, getDaddyLiveEvents } from "@/lib/sportsrc.functions";
+import { getMatchDetail } from "@/lib/sportsrc.functions";
 import type { Match } from "@/lib/sports/types";
 
 const StreamDialog = lazy(() =>
@@ -82,7 +82,6 @@ export function SportsPage(props: SportsPageProps) {
   const options = matchesQueryOptions(category);
   const { data, isFetching, refetch } = useSuspenseQuery(options);
   const fetchDetail = useServerFn(getMatchDetail);
-  const fetchDaddyLive = useServerFn(getDaddyLiveEvents);
 
   const matches = useMemo<Match[]>(
     () => [...staticMatches, ...normalizeMatches(data)],
@@ -209,8 +208,11 @@ export function SportsPage(props: SportsPageProps) {
       const [daddyResult, sportSrcResult] = await Promise.allSettled([
         // 1. DaddyLive — fetch schedule and fuzzy-match team names, return ALL channel links
         (async () => {
-          const daddyEvents = await fetchDaddyLive();
-          if (!daddyEvents || !Array.isArray(daddyEvents)) return null;
+          // Fetch directly from the browser — avoids Cloudflare server IP blocks
+          const res = await fetch("https://daddylive.li/api/events");
+          if (!res.ok) return null;
+          const daddyEvents = await res.json();
+          if (!Array.isArray(daddyEvents)) return null;
           for (const day of daddyEvents) {
             if (!day.categories) continue;
             for (const cat of Object.values(day.categories)) {
@@ -219,7 +221,6 @@ export function SportsPage(props: SportsPageProps) {
                 if (ev.event && ev.channels?.length > 0) {
                   const evName = ev.event.toLowerCase();
                   if (hName && aName && evName.includes(hName) && evName.includes(aName)) {
-                    // Return ALL available channel links for this event
                     return (ev.channels as any[]).map((ch: any, i: number) => ({
                       label: `Link ${i + 1}`,
                       url: ch.url as string,
