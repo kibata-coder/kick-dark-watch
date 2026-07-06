@@ -304,14 +304,14 @@ export function SportsPage(props: SportsPageProps) {
       if (sportSrcUrl || (daddyLinks && daddyLinks.length > 0)) {
         const sources: { label: string; url: string }[] = [];
         
-        if (sportSrcUrl) {
-          sources.push({ label: "Server 1", url: sportSrcUrl });
-        }
-        
         if (daddyLinks) {
           daddyLinks.forEach((link) => {
             sources.push({ label: `Server ${sources.length + 1}`, url: link.url });
           });
+        }
+
+        if (sportSrcUrl) {
+          sources.push({ label: `Server ${sources.length + 1} (Backup)`, url: sportSrcUrl });
         }
         
         setStreamSources(sources);
