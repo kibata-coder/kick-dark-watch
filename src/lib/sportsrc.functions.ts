@@ -24,18 +24,23 @@ export const getMatches = createServerFn({ method: "GET" })
     const category = data.category || "football";
     const qs = new URLSearchParams();
     
-    if (category === "football") {
-      qs.set("type", "matches");
-      qs.set("sport", "football");
-      if (data.status) {
-        qs.set("status", data.status);
+    try {
+      if (category === "football") {
+        qs.set("type", "matches");
+        qs.set("sport", "football");
+        if (data.status) {
+          qs.set("status", data.status);
+        }
+        qs.set("date", data.date);
+        return await callSportsrc(`https://api.sportsrc.org/v2/?${qs.toString()}`);
+      } else {
+        qs.set("data", "matches");
+        qs.set("category", category);
+        return await callSportsrc(`https://api.sportsrc.org/?${qs.toString()}`);
       }
-      qs.set("date", data.date);
-      return callSportsrc(`https://api.sportsrc.org/v2/?${qs.toString()}`);
-    } else {
-      qs.set("data", "matches");
-      qs.set("category", category);
-      return callSportsrc(`https://api.sportsrc.org/?${qs.toString()}`);
+    } catch (err) {
+      console.error(`Error fetching matches for ${category}:`, err);
+      return [];
     }
   });
 
