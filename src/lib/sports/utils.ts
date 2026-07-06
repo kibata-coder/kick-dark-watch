@@ -100,7 +100,7 @@ export function normalizeMatches(raw: any): Match[] {
     return {
       id: m.id,
       title: m.title,
-      status: deriveStatus(dateMs),
+      status: deriveStatus(dateMs, m.status),
       date: dateMs,
       time: formatMatchTime(dateMs),
       home: { name: homeName || "Team A", logo: m.teams?.home?.badge, score: m.score?.current?.home ?? m.teams?.home?.score },
